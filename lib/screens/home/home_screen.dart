@@ -12,6 +12,7 @@ import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
 import '../gamification/leaderboard_screen.dart';
 import '../../screens/food_waste_scan_screen.dart';
+import '../progress/progresss_boardig_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -85,7 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildHomeContent(context, foodScanProvider, authProvider),
       const HistoryScreen(),
       Container(), // Placeholder untuk tombol scan
-      const EducationalScreen(),
+      // const EducationalScreen(),
+      const ProgressBoardingScreen(),
       const ProfileScreen(),
     ];
     
@@ -138,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavBarItem(3, Icons.school, 'Edukasi'),
+                    _buildNavBarItem(3, Icons.show_chart, 'Progress'), // Ubah ikon dan label di sini
                     _buildNavBarItem(4, Icons.person, 'Profil'),
                   ],
                 ),
@@ -472,6 +474,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _buildFeatureCard(
                     context,
+                    'Progress',
+                    'Rangkuman statistik makanan anda',
+                    Icons.show_chart,
+                    Colors.purple,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ProgressBoardingScreen()),
+                      );
+                    },
+                  ),
+                  _buildFeatureCard(
+                    context,
                     'Scan Makanan',
                     'Scan makanan dengan kamera',
                     Icons.camera_alt,
@@ -657,4 +672,4 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return scan.foodItems.fold(0.0, (sum, item) => sum + item.weight);
   }
-} 
+}
