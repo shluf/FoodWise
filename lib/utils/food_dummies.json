@@ -1,0 +1,740 @@
+[
+  {
+    "foodName": "Bubur Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.72,
+    "aiRemainingPercentage": null,
+    "finishTime": "2025-04-23T07:27:00",
+    "foodItems": [
+      {
+        "itemName": "Bubur",
+        "weight": 250,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Ayam Suwir",
+        "weight": 60,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": true,
+    "potentialFoodWasteItems": []
+  },
+  {
+    "foodName": "Nasi Padang",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.7,
+    "aiRemainingPercentage": 6.3,
+    "finishTime": "2025-04-23T12:36:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 250,
+        "remainingWeight": 17.9
+      },
+      {
+        "itemName": "Rendang",
+        "weight": 70,
+        "remainingWeight": 2.2
+      },
+      {
+        "itemName": "Sayur Nangka",
+        "weight": 50,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 0.000895,
+        "scanTime": "2025-04-23T12:36:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Rendang",
+        "estimatedCarbonEmission": 0.00011,
+        "scanTime": "2025-04-23T12:36:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Soto Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.83,
+    "aiRemainingPercentage": 10.5,
+    "finishTime": "2025-04-23T19:19:00",
+    "foodItems": [
+      {
+        "itemName": "Soto",
+        "weight": 300,
+        "remainingWeight": 31.5
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Soto",
+        "estimatedCarbonEmission": 0.001575,
+        "scanTime": "2025-04-23T19:19:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Nasi Uduk",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.77,
+    "aiRemainingPercentage": 1.0,
+    "finishTime": "2025-04-24T07:48:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": 0.5
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Tempe",
+        "weight": 50,
+        "remainingWeight": 2.1
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 2.5e-05,
+        "scanTime": "2025-04-24T07:48:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Tempe",
+        "estimatedCarbonEmission": 0.000105,
+        "scanTime": "2025-04-24T07:48:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Ayam Geprek",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.85,
+    "aiRemainingPercentage": 23.5,
+    "finishTime": "2025-04-24T12:32:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Ayam",
+        "weight": 100,
+        "remainingWeight": 23.5
+      },
+      {
+        "itemName": "Sambal",
+        "weight": 20,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Ayam",
+        "estimatedCarbonEmission": 0.001175,
+        "scanTime": "2025-04-24T12:32:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Capcay",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.7,
+    "aiRemainingPercentage": 26.2,
+    "finishTime": "2025-04-24T19:49:00",
+    "foodItems": [
+      {
+        "itemName": "Sayur",
+        "weight": 200,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Bakso",
+        "weight": 50,
+        "remainingWeight": 13.1
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Bakso",
+        "estimatedCarbonEmission": 0.000655,
+        "scanTime": "2025-04-24T19:49:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Bubur Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.94,
+    "aiRemainingPercentage": 25.2,
+    "finishTime": "2025-04-25T07:48:00",
+    "foodItems": [
+      {
+        "itemName": "Bubur",
+        "weight": 250,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Ayam Suwir",
+        "weight": 60,
+        "remainingWeight": 15.1
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Ayam Suwir",
+        "estimatedCarbonEmission": 0.000755,
+        "scanTime": "2025-04-25T07:48:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Mie Goreng",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.72,
+    "aiRemainingPercentage": 12.2,
+    "finishTime": "2025-04-25T12:27:00",
+    "foodItems": [
+      {
+        "itemName": "Mie",
+        "weight": 200,
+        "remainingWeight": 22.5
+      },
+      {
+        "itemName": "Bakso",
+        "weight": 50,
+        "remainingWeight": 7.9
+      },
+      {
+        "itemName": "Sayur",
+        "weight": 50,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Mie",
+        "estimatedCarbonEmission": 0.001125,
+        "scanTime": "2025-04-25T12:27:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Bakso",
+        "estimatedCarbonEmission": 0.000395,
+        "scanTime": "2025-04-25T12:27:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Capcay",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.99,
+    "aiRemainingPercentage": 25.6,
+    "finishTime": "2025-04-25T19:51:00",
+    "foodItems": [
+      {
+        "itemName": "Sayur",
+        "weight": 200,
+        "remainingWeight": 51.2
+      },
+      {
+        "itemName": "Bakso",
+        "weight": 50,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Sayur",
+        "estimatedCarbonEmission": 0.00256,
+        "scanTime": "2025-04-25T19:51:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Nasi Uduk",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.73,
+    "aiRemainingPercentage": 23.8,
+    "finishTime": "2025-04-26T07:48:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": 47.5
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Tempe",
+        "weight": 50,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 0.002375,
+        "scanTime": "2025-04-26T07:48:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Ayam Geprek",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.9,
+    "aiRemainingPercentage": 17.1,
+    "finishTime": "2025-04-26T12:03:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": 34.2
+      },
+      {
+        "itemName": "Ayam",
+        "weight": 100,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Sambal",
+        "weight": 20,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 0.00171,
+        "scanTime": "2025-04-26T12:03:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Soto Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.89,
+    "aiRemainingPercentage": 7.3,
+    "finishTime": "2025-04-26T19:22:00",
+    "foodItems": [
+      {
+        "itemName": "Soto",
+        "weight": 300,
+        "remainingWeight": 21.5
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": 4.7
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Soto",
+        "estimatedCarbonEmission": 0.001075,
+        "scanTime": "2025-04-26T19:22:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Telur",
+        "estimatedCarbonEmission": 0.000235,
+        "scanTime": "2025-04-26T19:22:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Roti Bakar",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.91,
+    "aiRemainingPercentage": 27.9,
+    "finishTime": "2025-04-27T07:07:00",
+    "foodItems": [
+      {
+        "itemName": "Roti",
+        "weight": 80,
+        "remainingWeight": 22.3
+      },
+      {
+        "itemName": "Selai",
+        "weight": 20,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Roti",
+        "estimatedCarbonEmission": 0.001115,
+        "scanTime": "2025-04-27T07:07:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Mie Goreng",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.81,
+    "aiRemainingPercentage": 17.0,
+    "finishTime": "2025-04-27T12:15:00",
+    "foodItems": [
+      {
+        "itemName": "Mie",
+        "weight": 200,
+        "remainingWeight": 44.9
+      },
+      {
+        "itemName": "Bakso",
+        "weight": 50,
+        "remainingWeight": 5.5
+      },
+      {
+        "itemName": "Sayur",
+        "weight": 50,
+        "remainingWeight": 0.5
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Mie",
+        "estimatedCarbonEmission": 0.002245,
+        "scanTime": "2025-04-27T12:15:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Bakso",
+        "estimatedCarbonEmission": 0.000275,
+        "scanTime": "2025-04-27T12:15:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Sayur",
+        "estimatedCarbonEmission": 2.5e-05,
+        "scanTime": "2025-04-27T12:15:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Capcay",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.87,
+    "aiRemainingPercentage": 3.5,
+    "finishTime": "2025-04-27T19:05:00",
+    "foodItems": [
+      {
+        "itemName": "Sayur",
+        "weight": 200,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Bakso",
+        "weight": 50,
+        "remainingWeight": 6.6
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": 0.5
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Bakso",
+        "estimatedCarbonEmission": 0.00033,
+        "scanTime": "2025-04-27T19:05:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      },
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 2.5e-05,
+        "scanTime": "2025-04-27T19:05:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Bubur Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.85,
+    "aiRemainingPercentage": 22.8,
+    "finishTime": "2025-04-28T07:30:00",
+    "foodItems": [
+      {
+        "itemName": "Bubur",
+        "weight": 250,
+        "remainingWeight": 57.0
+      },
+      {
+        "itemName": "Ayam Suwir",
+        "weight": 60,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Bubur",
+        "estimatedCarbonEmission": 0.00285,
+        "scanTime": "2025-04-28T07:30:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Ayam Geprek",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.73,
+    "aiRemainingPercentage": null,
+    "finishTime": "2025-04-28T12:01:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Ayam",
+        "weight": 100,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Sambal",
+        "weight": 20,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": true,
+    "potentialFoodWasteItems": []
+  },
+  {
+    "foodName": "Soto Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.84,
+    "aiRemainingPercentage": 26.3,
+    "finishTime": "2025-04-28T19:50:00",
+    "foodItems": [
+      {
+        "itemName": "Soto",
+        "weight": 300,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": 15.8
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Telur",
+        "estimatedCarbonEmission": 0.00079,
+        "scanTime": "2025-04-28T19:50:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Bubur Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.74,
+    "aiRemainingPercentage": 18.0,
+    "finishTime": "2025-04-29T07:28:00",
+    "foodItems": [
+      {
+        "itemName": "Bubur",
+        "weight": 250,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Ayam Suwir",
+        "weight": 60,
+        "remainingWeight": 10.8
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Ayam Suwir",
+        "estimatedCarbonEmission": 0.00054,
+        "scanTime": "2025-04-29T07:28:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Ayam Geprek",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.75,
+    "aiRemainingPercentage": 5.3,
+    "finishTime": "2025-04-29T12:14:00",
+    "foodItems": [
+      {
+        "itemName": "Nasi",
+        "weight": 200,
+        "remainingWeight": 10.7
+      },
+      {
+        "itemName": "Ayam",
+        "weight": 100,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Sambal",
+        "weight": 20,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Nasi",
+        "estimatedCarbonEmission": 0.000535,
+        "scanTime": "2025-04-29T12:14:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  },
+  {
+    "foodName": "Soto Ayam",
+    "imageUrl": "https://via.placeholder.com/150",
+    "afterImageUrl": null,
+    "aiConfidence": 0.86,
+    "aiRemainingPercentage": 22.0,
+    "finishTime": "2025-04-29T19:32:00",
+    "foodItems": [
+      {
+        "itemName": "Soto",
+        "weight": 300,
+        "remainingWeight": 65.9
+      },
+      {
+        "itemName": "Telur",
+        "weight": 60,
+        "remainingWeight": null
+      },
+      {
+        "itemName": "Nasi",
+        "weight": 150,
+        "remainingWeight": null
+      }
+    ],
+    "isDone": true,
+    "isEaten": false,
+    "potentialFoodWasteItems": [
+      {
+        "itemName": "Soto",
+        "estimatedCarbonEmission": 0.003295,
+        "scanTime": "2025-04-29T19:32:00",
+        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+      }
+    ]
+  }
+]

@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../widgets/food_comparison_result_widget.dart';
+import '../../utils/dummy_data_generator.dart'; // Import DummyDataGenerator
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -36,6 +37,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Pemindaian'),
+        // ===================== TEMPORARY DUMMY BUTTON START =====================
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white, // Button background color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                final generator = DummyDataGenerator();
+                await generator.loadAndSaveDummyData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Dummy data uploaded to Firestore')),
+                );
+              },
+              child: const Text(
+                'Generate Dummy',
+                style: TextStyle(
+                  color: Colors.blue, // Text color
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+        // ===================== TEMPORARY DUMMY BUTTON END =====================
       ),
       body: foodScanProvider.isLoading 
           ? const Center(child: CircularProgressIndicator())
@@ -380,4 +410,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     return scan.foodItems.fold(0.0, (sum, item) => sum + (item.remainingWeight ?? 0.0));
   }
-} 
+}
