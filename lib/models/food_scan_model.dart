@@ -165,4 +165,4 @@ class FoodScanModel {
       aiConfidence: aiConfidence ?? this.aiConfidence,
     );
   }
-} 
+}

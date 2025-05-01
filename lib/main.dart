@@ -24,7 +24,25 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initializeDateFormatting('id_ID', null);
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, FoodScanProvider>(
+          create: (_) => FoodScanProvider(dotenv.env['GEMINI_API_KEY'] ?? ''),
+          update: (context, authProvider, foodScanProvider) {
+            final userId = authProvider.currentUserId;
+            if (userId != null) {
+              foodScanProvider?.loadUserFoodScans(userId);
+            }
+            return foodScanProvider!;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => GamificationProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -32,105 +50,98 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => FoodScanProvider(dotenv.env['GEMINI_API_KEY'] ?? '')),
-        ChangeNotifierProvider(create: (_) => GamificationProvider()),
-      ],
-      child: MaterialApp(
-        title: 'FoodWise',
-        theme: ThemeData(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primaryColor,
-            secondary: AppColors.secondaryColor,
-            surface: AppColors.surfaceColor,
-            background: AppColors.backgroundColor,
-            error: AppColors.errorColor,
-          ),
-          scaffoldBackgroundColor: AppColors.backgroundColor,
-          fontFamily: 'Poppins',
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppColors.primaryColor,
-            foregroundColor: AppColors.textLight,
-            elevation: 0,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: AppColors.textLight,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 2,
-            ),
-          ),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primaryColor,
-              side: const BorderSide(color: AppColors.primaryColor),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primaryColor,
-            ),
-          ),
-          cardTheme: CardTheme(
-            color: AppColors.surfaceColor,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: AppColors.primaryColor,
-            foregroundColor: AppColors.textLight,
-            elevation: 4,
-          ),
-          textTheme: const TextTheme(
-            titleLarge: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-            titleMedium: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-            bodyLarge: TextStyle(color: AppColors.textPrimary),
-            bodyMedium: TextStyle(color: AppColors.textSecondary),
-          ),
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: AppColors.surfaceColor,
-            selectedItemColor: AppColors.primaryColor,
-            unselectedItemColor: AppColors.textSecondary,
-          ),
-          useMaterial3: true,
+    return MaterialApp(
+      title: 'FoodWise',
+      theme: ThemeData(
+        colorScheme: const ColorScheme.light(
+          primary: AppColors.primaryColor,
+          secondary: AppColors.secondaryColor,
+          surface: AppColors.surfaceColor,
+          background: AppColors.backgroundColor,
+          error: AppColors.errorColor,
         ),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('id', 'ID'),
-          Locale('en', 'US'),
-        ],
-        locale: const Locale('id', 'ID'),
-        home: const AuthWrapper(),
-        routes: {
-          '/home': (context) => const HomeScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/profile': (context) => const ProfileOnboardingScreen(),
-          '/scan': (context) => const ScanScreen(),
-        },
-        debugShowCheckedModeBanner: false,
+        scaffoldBackgroundColor: AppColors.backgroundColor,
+        fontFamily: 'Poppins',
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.textLight,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: AppColors.textLight,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            elevation: 2,
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primaryColor,
+            side: const BorderSide(color: AppColors.primaryColor),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primaryColor,
+          ),
+        ),
+        cardTheme: CardTheme(
+          color: AppColors.surfaceColor,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: AppColors.primaryColor,
+          foregroundColor: AppColors.textLight,
+          elevation: 4,
+        ),
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+          titleMedium: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+          bodyLarge: TextStyle(color: AppColors.textPrimary),
+          bodyMedium: TextStyle(color: AppColors.textSecondary),
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: AppColors.surfaceColor,
+          selectedItemColor: AppColors.primaryColor,
+          unselectedItemColor: AppColors.textSecondary,
+        ),
+        useMaterial3: true,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('id', 'ID'),
+        Locale('en', 'US'),
+      ],
+      locale: const Locale('id', 'ID'),
+      home: const AuthWrapper(),
+      routes: {
+        '/home': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/profile': (context) => const ProfileOnboardingScreen(),
+        '/scan': (context) => const ScanScreen(),
+      },
+      debugShowCheckedModeBanner: false,
     );
   }
 }

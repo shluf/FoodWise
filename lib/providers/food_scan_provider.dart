@@ -6,6 +6,7 @@ import '../services/ai_service.dart';
 import '../services/widget_service.dart';
 import '../services/storage_service.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FoodScanProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -24,7 +25,24 @@ class FoodScanProvider extends ChangeNotifier {
   // Menyimpan path gambar yang sudah diambil sebelumnya untuk overlay
   File? _lastCapturedImage;
   
-  FoodScanProvider(String apiKey) : _aiService = AIService(apiKey);
+  FoodScanProvider(String apiKey) : _aiService = AIService(apiKey) {
+    // Muat ulang data saat provider diinisialisasi
+    _initialize();
+  }
+
+  void _initialize() {
+    // Pastikan userId diatur sebelum memanggil ini
+    final userId = _getCurrentUserId();
+    if (userId != null) {
+      loadUserFoodScans(userId);
+    }
+  }
+
+  String? _getCurrentUserId() {
+    // Ambil userId dari Firebase Authentication
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
   
   List<FoodScanModel> get foodScans => _foodScans;
   bool get isLoading => _isLoading;
@@ -460,4 +478,4 @@ class FoodScanProvider extends ChangeNotifier {
     _isLoading = loading;
     notifyListeners();
   }
-} 
+}

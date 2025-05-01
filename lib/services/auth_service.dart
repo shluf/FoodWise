@@ -174,6 +174,7 @@ class AuthService {
       await _auth.currentUser!.delete();
     } catch (e) {
       print('Error deleting account: $e');
+      rethrow;
     }
   }
   

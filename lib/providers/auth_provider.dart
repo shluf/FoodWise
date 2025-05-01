@@ -17,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isLoggedIn => _user != null;
   bool get isInitialized => _isInitialized;
+  String? get currentUserId => _user?.id;
   
   AuthProvider() {
     _init();

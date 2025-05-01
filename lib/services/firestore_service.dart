@@ -56,7 +56,7 @@ class FirestoreService {
       QuerySnapshot snapshot = await _firestore
           .collection('foodScans')
           .where('userId', isEqualTo: userId)
-          .where('isFinished', isEqualTo: false)
+          .where('isDone', isEqualTo: true) // Perbaikan: gunakan 'isDone' bukan 'isFinished'
           .get();
       
       Map<DateTime, double> weeklyFoodWaste = {};
@@ -84,6 +84,19 @@ class FirestoreService {
       print('Error getting total food waste by week: $e');
       return {};
     }
+  }
+  
+  Stream<FoodScanModel?> getFoodScanById(String foodScanId) {
+    return _firestore
+        .collection('foodScans')
+        .doc(foodScanId)
+        .snapshots()
+        .map((doc) {
+          if (doc.exists) {
+            return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+          }
+          return null;
+        });
   }
   
   // Quests Collection
@@ -223,4 +236,4 @@ class FirestoreService {
       return [];
     }
   }
-} 
+}
