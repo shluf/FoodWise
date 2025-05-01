@@ -20,7 +20,9 @@
     ],
     "isDone": true,
     "isEaten": true,
-    "potentialFoodWasteItems": []
+    "potentialFoodWasteItems": [],
+    "scanTime": "2025-04-23T07:27:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Nasi Padang",
@@ -51,17 +53,15 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 0.000895,
-        "scanTime": "2025-04-23T12:36:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000895
       },
       {
         "itemName": "Rendang",
-        "estimatedCarbonEmission": 0.00011,
-        "scanTime": "2025-04-23T12:36:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00011
       }
-    ]
+    ],
+    "scanTime": "2025-04-23T12:36:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Soto Ayam",
@@ -92,11 +92,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Soto",
-        "estimatedCarbonEmission": 0.001575,
-        "scanTime": "2025-04-23T19:19:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.001575
       }
-    ]
+    ],
+    "scanTime": "2025-04-23T19:19:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Nasi Uduk",
@@ -127,17 +127,15 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 2.5e-05,
-        "scanTime": "2025-04-24T07:48:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 2.5e-05
       },
       {
         "itemName": "Tempe",
-        "estimatedCarbonEmission": 0.000105,
-        "scanTime": "2025-04-24T07:48:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000105
       }
-    ]
+    ],
+    "scanTime": "2025-04-24T07:48:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Ayam Geprek",
@@ -168,11 +166,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Ayam",
-        "estimatedCarbonEmission": 0.001175,
-        "scanTime": "2025-04-24T12:32:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.001175
       }
-    ]
+    ],
+    "scanTime": "2025-04-24T12:32:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Capcay",
@@ -203,11 +201,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Bakso",
-        "estimatedCarbonEmission": 0.000655,
-        "scanTime": "2025-04-24T19:49:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000655
       }
-    ]
+    ],
+    "scanTime": "2025-04-24T19:49:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Bubur Ayam",
@@ -233,11 +231,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Ayam Suwir",
-        "estimatedCarbonEmission": 0.000755,
-        "scanTime": "2025-04-25T07:48:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000755
       }
-    ]
+    ],
+    "scanTime": "2025-04-25T07:48:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Mie Goreng",
@@ -268,17 +266,15 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Mie",
-        "estimatedCarbonEmission": 0.001125,
-        "scanTime": "2025-04-25T12:27:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.001125
       },
       {
         "itemName": "Bakso",
-        "estimatedCarbonEmission": 0.000395,
-        "scanTime": "2025-04-25T12:27:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000395
       }
-    ]
+    ],
+    "scanTime": "2025-04-25T12:27:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Capcay",
@@ -309,11 +305,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Sayur",
-        "estimatedCarbonEmission": 0.00256,
-        "scanTime": "2025-04-25T19:51:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00256
       }
-    ]
+    ],
+    "scanTime": "2025-04-25T19:51:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Nasi Uduk",
@@ -344,11 +340,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 0.002375,
-        "scanTime": "2025-04-26T07:48:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.002375
       }
-    ]
+    ],
+    "scanTime": "2025-04-26T07:48:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Ayam Geprek",
@@ -379,11 +375,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 0.00171,
-        "scanTime": "2025-04-26T12:03:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00171
       }
-    ]
+    ],
+    "scanTime": "2025-04-26T12:03:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Soto Ayam",
@@ -414,17 +410,15 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Soto",
-        "estimatedCarbonEmission": 0.001075,
-        "scanTime": "2025-04-26T19:22:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.001075
       },
       {
         "itemName": "Telur",
-        "estimatedCarbonEmission": 0.000235,
-        "scanTime": "2025-04-26T19:22:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000235
       }
-    ]
+    ],
+    "scanTime": "2025-04-26T19:22:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Roti Bakar",
@@ -450,11 +444,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Roti",
-        "estimatedCarbonEmission": 0.001115,
-        "scanTime": "2025-04-27T07:07:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.001115
       }
-    ]
+    ],
+    "scanTime": "2025-04-27T07:07:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Mie Goreng",
@@ -485,23 +479,19 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Mie",
-        "estimatedCarbonEmission": 0.002245,
-        "scanTime": "2025-04-27T12:15:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.002245
       },
       {
         "itemName": "Bakso",
-        "estimatedCarbonEmission": 0.000275,
-        "scanTime": "2025-04-27T12:15:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000275
       },
       {
         "itemName": "Sayur",
-        "estimatedCarbonEmission": 2.5e-05,
-        "scanTime": "2025-04-27T12:15:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 2.5e-05
       }
-    ]
+    ],
+    "scanTime": "2025-04-27T12:15:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Capcay",
@@ -532,17 +522,15 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Bakso",
-        "estimatedCarbonEmission": 0.00033,
-        "scanTime": "2025-04-27T19:05:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00033
       },
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 2.5e-05,
-        "scanTime": "2025-04-27T19:05:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 2.5e-05
       }
-    ]
+    ],
+    "scanTime": "2025-04-27T19:05:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Bubur Ayam",
@@ -568,11 +556,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Bubur",
-        "estimatedCarbonEmission": 0.00285,
-        "scanTime": "2025-04-28T07:30:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00285
       }
-    ]
+    ],
+    "scanTime": "2025-04-28T07:30:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Ayam Geprek",
@@ -600,7 +588,9 @@
     ],
     "isDone": true,
     "isEaten": true,
-    "potentialFoodWasteItems": []
+    "potentialFoodWasteItems": [],
+    "scanTime": "2025-04-28T12:01:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Soto Ayam",
@@ -631,11 +621,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Telur",
-        "estimatedCarbonEmission": 0.00079,
-        "scanTime": "2025-04-28T19:50:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00079
       }
-    ]
+    ],
+    "scanTime": "2025-04-28T19:50:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Bubur Ayam",
@@ -661,11 +651,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Ayam Suwir",
-        "estimatedCarbonEmission": 0.00054,
-        "scanTime": "2025-04-29T07:28:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.00054
       }
-    ]
+    ],
+    "scanTime": "2025-04-29T07:28:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Ayam Geprek",
@@ -696,11 +686,11 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Nasi",
-        "estimatedCarbonEmission": 0.000535,
-        "scanTime": "2025-04-29T12:14:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.000535
       }
-    ]
+    ],
+    "scanTime": "2025-04-29T12:14:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   },
   {
     "foodName": "Soto Ayam",
@@ -731,10 +721,10 @@
     "potentialFoodWasteItems": [
       {
         "itemName": "Soto",
-        "estimatedCarbonEmission": 0.003295,
-        "scanTime": "2025-04-29T19:32:00",
-        "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
+        "estimatedCarbonEmission": 0.003295
       }
-    ]
+    ],
+    "scanTime": "2025-04-29T19:32:00",
+    "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2"
   }
 ]

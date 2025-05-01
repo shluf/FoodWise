@@ -33,7 +33,7 @@ class DummyDataGenerator {
           aiConfidence: item['aiConfidence']?.toDouble() ?? 0.0, // Default value for aiConfidence
           aiRemainingPercentage: item['aiRemainingPercentage']?.toDouble() ?? 0.0, // Default value for aiRemainingPercentage
           finishTime: DateTime.parse(item['finishTime']),
-          scanTime: DateTime.now(), // Use current time if scanTime is not provided
+          scanTime: DateTime.parse(item['scanTime']), // Use current time if scanTime is not provided
           foodItems: (item['foodItems'] as List<dynamic>).map((foodItem) {
             return FoodItem(
               itemName: foodItem['itemName'] ?? 'Unknown Item', // Default value for itemName

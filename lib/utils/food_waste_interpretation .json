@@ -1,0 +1,29 @@
+{
+    "dataInterpretation": {
+        "rekomendasiPorsiIdeal": [
+            "Kurangi porsi makan siang sebesar 10% untuk menghindari sisa makanan.",
+            "Dressing salad sering tersisa. Pertimbangkan untuk mengurangi atau tidak menambahkannya."
+        ],
+        "jenisMakananPalingSeringTerbuang": "Sayuran dan dressing salad tercatat paling sering tersisa. Ini bisa disebabkan oleh preferensi rasa atau makanan yang cepat basi.",
+        "waktuMakanPenyebabFoodWasteTerbanyak": [
+            {
+                "waktu": "Makan siang",
+                "analisis": "Makan siang di kantor cenderung menyisakan makanan.",
+                "solusi": "Disarankan mengurangi porsi makan siang."
+            },
+            {
+                "waktu": "Makan malam",
+                "analisis": "Porsi makan malam sering tidak habis.",
+                "solusi": "Kurangi porsi makan malam secara bertahap."
+            }
+        ],
+        "estimasiPenguranganFoodWaste": [
+            "Selama sebulan terakhir, Anda telah berhasil mengurangi food waste sebesar 15%.",
+            "Dengan kebiasaan ini, Anda berpotensi menyelamatkan sekitar 5 kg makanan per tahun."
+        ],
+        "dampakFoodWasteTerhadapEmisiKarbon": [
+            "Jumlah makanan yang Anda buang bulan ini setara dengan 2,3 kg CO\u2082.",
+            "Jika Anda terus mengurangi food waste sebesar 10%, Anda bisa menekan emisi karbon sebesar 0,5 kg CO\u2082 setiap bulan."
+        ]
+    }
+}

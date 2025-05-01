@@ -290,7 +290,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
-                      value: scan.aiRemainingPercentage! / 100,
+                      value: 1 - (scan.aiRemainingPercentage! / 100), // Ubah logika di sini
                       minHeight: 8,
                       backgroundColor: Colors.grey[300],
                       valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),

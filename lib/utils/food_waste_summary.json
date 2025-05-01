@@ -1,0 +1,77 @@
+{
+  "generalUserRecommendations": [
+    {
+      "userId": "wtBNwiT4XiPjUGxOD4lanNnIXUk2",
+      "eatingPattern": {
+        "frequentWasteTime": "Lunch",
+        "mostWastedItem": "Nasi",
+        "averageWastePercentage": 11.6
+      },
+      "suggestions": {
+        "portionAdjustment": "Kurangi porsi nasi saat makan siang.",
+        "foodTypeRecommendation": "Pilih makanan berbasis sayuran atau sup saat siang.",
+        "behavioralTip": "Usahakan ambil porsi lebih kecil terlebih dahulu, dan tambah jika masih lapar."
+      }
+    }
+  ],
+  "topWastedFoodItems": [
+    {
+      "itemName": "Nasi",
+      "totalRemainingWeight": 200.5,
+      "totalOccurrences": 15
+    },
+    {
+      "itemName": "Rendang",
+      "totalRemainingWeight": 120.8,
+      "totalOccurrences": 10
+    }
+  ],
+  "foodWasteByMealTime": [
+    {
+      "mealTime": "Breakfast",
+      "averageRemainingPercentage": 3.2
+    },
+    {
+      "mealTime": "Lunch",
+      "averageRemainingPercentage": 11.6
+    },
+    {
+      "mealTime": "Dinner",
+      "averageRemainingPercentage": 5.1
+    }
+  ],
+  "foodWasteByDayOfWeek": [
+    {
+      "day": "Monday",
+      "totalWasteGram": 520.5
+    },
+    {
+      "day": "Tuesday",
+      "totalWasteGram": 380.3
+    },
+    {
+      "day": "Wednesday",
+      "totalWasteGram": 290.0
+    }
+  ],
+  "totalFoodWaste": {
+    "totalWeight_gram": 1750.4,
+    "totalWeight_kg": 1.7504,
+    "totalCarbonEmission_kgCO2": 0.00621
+  },
+  "mostFinishedItems": [
+    {
+      "itemName": "Sayur Nangka",
+      "finishedCount": 12
+    },
+    {
+      "itemName": "Ayam Suwir",
+      "finishedCount": 9
+    }
+  ],
+  "wasteByCategory": {
+    "Carbohydrate": 350,
+    "Protein": 180,
+    "Vegetables": 90
+  }
+}
