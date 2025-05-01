@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "616168812645-ufo53ri3ulr944t4gk6duv4p7b5is7pk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ahshaka.foodwise",
+            "certificate_hash": "ba9929dc9be850532d32620a715111f354b15a9a"
+          }
+        },
+        {
           "client_id": "616168812645-eakknifv5a6fs4ta39g535f11f50a0nj.apps.googleusercontent.com",
           "client_type": 3
         }
