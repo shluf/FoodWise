@@ -42,453 +42,453 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     final mostWastedItems = _getMostWastedItems(foodScanProvider.foodScans);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Weekly Progress'),
-      ),
-      body: foodScanProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : foodScanProvider.foodScans.isEmpty
-              ? const Center(child: Text('No food scan data available.'))
-              : ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    const Text(
-                      'Weekly Statistics',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'Inter',
-                        color: Color(0xFF000000),
+      appBar: null,
+      body: SafeArea(
+        child: foodScanProvider.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : foodScanProvider.foodScans.isEmpty
+                ? const Center(child: Text('No food scan data available.'))
+                : ListView(
+                    padding: const EdgeInsets.all(16.0),
+                    children: [
+                      const Text(
+                        'Weekly Statistics',
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Inter',
+                          color: Color(0xFF000000),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Food Waste Statistics',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF000000),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Hi ${Provider.of<AuthProvider>(context).user!.username}, these are your food waste stats for this week',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Inter',
-                              color: Colors.grey[600],
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Food Waste Statistics',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF000000),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Stack(
-                            children: [
-                              Container(
-                                height: MediaQuery.of(context).size.height * 0.5,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: BarChart(
-                                  BarChartData(
-                                    alignment: BarChartAlignment.spaceAround,
-                                    maxY: weeklyWaste.values.reduce((a, b) => a > b ? a : b) + 50,
-                                    barTouchData: BarTouchData(
-                                      touchCallback: (event, response) {
-                                        if (response != null && response.spot != null) {
-                                          final touchedIndex = response.spot!.touchedBarGroupIndex;
+                            const SizedBox(height: 8),
+                            Text(
+                              'Hi ${Provider.of<AuthProvider>(context).user!.username}, these are your food waste stats for this week',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Inter',
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Stack(
+                              children: [
+                                Container(
+                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: BarChart(
+                                    BarChartData(
+                                      alignment: BarChartAlignment.spaceAround,
+                                      maxY: weeklyWaste.values.reduce((a, b) => a > b ? a : b) + 50,
+                                      barTouchData: BarTouchData(
+                                        touchCallback: (event, response) {
+                                          if (response != null && response.spot != null) {
+                                            final touchedIndex = response.spot!.touchedBarGroupIndex;
 
-                                          if (touchedIndex >= 0 && touchedIndex < weeklyWaste.entries.length) {
-                                            // Get data based on index from weeklyWaste.entries
-                                            final selectedEntry = weeklyWaste.entries.elementAt(touchedIndex);
-                                            final selectedDate = selectedEntry.key;
-                                            final wasteInGrams = selectedEntry.value.toStringAsFixed(2);
+                                            if (touchedIndex >= 0 && touchedIndex < weeklyWaste.entries.length) {
+                                              // Get data based on index from weeklyWaste.entries
+                                              final selectedEntry = weeklyWaste.entries.elementAt(touchedIndex);
+                                              final selectedDate = selectedEntry.key;
+                                              final wasteInGrams = selectedEntry.value.toStringAsFixed(2);
 
-                                            // Format date to "1 April 2025"
-                                            final date = DateTime.now().subtract(Duration(days: DateTime.now().weekday - selectedDate - 1));
-                                            final formattedDate = '${date.day} ${_getMonthName(date.month)} ${date.year}';
+                                              // Format date to "1 April 2025"
+                                              final date = DateTime.now().subtract(Duration(days: DateTime.now().weekday - selectedDate - 1));
+                                              final formattedDate = '${date.day} ${_getMonthName(date.month)} ${date.year}';
 
-                                            // Show data as overlay
-                                            setState(() {
-                                              _selectedBarData = 'Date: $formattedDate\nWaste Amount: $wasteInGrams grams';
-                                            });
+                                              // Show data as overlay
+                                              setState(() {
+                                                _selectedBarData = 'Date: $formattedDate\nWaste Amount: $wasteInGrams grams';
+                                              });
 
-                                            // Remove overlay after a few seconds, reset if another bar is clicked
-                                            Future.delayed(const Duration(seconds: 3), () {
-                                              if (_selectedBarData == 'Date: $formattedDate\nWaste Amount: $wasteInGrams grams') {
-                                                setState(() {
-                                                  _selectedBarData = null;
-                                                });
-                                              }
-                                            });
+                                              // Remove overlay after a few seconds, reset if another bar is clicked
+                                              Future.delayed(const Duration(seconds: 3), () {
+                                                if (_selectedBarData == 'Date: $formattedDate\nWaste Amount: $wasteInGrams grams') {
+                                                  setState(() {
+                                                    _selectedBarData = null;
+                                                  });
+                                                }
+                                              });
+                                            }
                                           }
-                                        }
-                                      },
-                                      touchTooltipData: BarTouchTooltipData(
-                                        tooltipBgColor: Colors.transparent,
-                                        tooltipPadding: EdgeInsets.zero,
-                                        tooltipMargin: 0,
-                                        getTooltipItem: (group, groupIndex, rod, rodIndex) => null, // Disable default tooltip
-                                      ),
-                                    ),
-                                    titlesData: FlTitlesData(
-                                      leftTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          getTitlesWidget: (value, meta) => Text(
-                                            value.toInt().toString(),
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontFamily: 'Inter',
-                                              color: Color(0xFF000000),
-                                            ),
-                                          ),
-                                          reservedSize: 30,
-                                          interval: 200, // Fixed interval of 200 grams
+                                        },
+                                        touchTooltipData: BarTouchTooltipData(
+                                          tooltipBgColor: Colors.transparent,
+                                          tooltipPadding: EdgeInsets.zero,
+                                          tooltipMargin: 0,
+                                          getTooltipItem: (group, groupIndex, rod, rodIndex) => null, // Disable default tooltip
                                         ),
                                       ),
-                                      rightTitles: AxisTitles(
-                                        sideTitles: SideTitles(showTitles: false), // Remove Y-axis on the right
-                                      ),
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          getTitlesWidget: (value, meta) {
-                                            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                                            return Text(
-                                              days[value.toInt()],
+                                      titlesData: FlTitlesData(
+                                        leftTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            getTitlesWidget: (value, meta) => Text(
+                                              value.toInt().toString(),
                                               style: const TextStyle(
                                                 fontSize: 10,
                                                 fontFamily: 'Inter',
                                                 color: Color(0xFF000000),
                                               ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    gridData: FlGridData(show: true),
-                                    borderData: FlBorderData(show: false),
-                                    barGroups: weeklyWaste.entries.map((entry) {
-                                      final isToday = entry.key == DateTime.now().weekday - 1; // Check if today
-                                      return BarChartGroupData(
-                                        x: entry.key,
-                                        barRods: [
-                                          BarChartRodData(
-                                            fromY: 0,
-                                            toY: entry.value.toDouble(),
-                                            color: isToday ? Color(0xFF070707) : Color(0xFF226CE0), // Different color for today
-                                            width: 24, // Thicker bar graph
-                                            borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            reservedSize: 30,
+                                            interval: 200, // Fixed interval of 200 grams
                                           ),
-                                        ],
-                                        showingTooltipIndicators: [], // Remove numbers above the bars
-                                      );
-                                    }).toList(),
+                                        ),
+                                        rightTitles: AxisTitles(
+                                          sideTitles: SideTitles(showTitles: false), // Remove Y-axis on the right
+                                        ),
+                                        bottomTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            getTitlesWidget: (value, meta) {
+                                              const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                                              return Text(
+                                                days[value.toInt()],
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  fontFamily: 'Inter',
+                                                  color: Color(0xFF000000),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      gridData: FlGridData(show: true),
+                                      borderData: FlBorderData(show: false),
+                                      barGroups: weeklyWaste.entries.map((entry) {
+                                        final isToday = entry.key == DateTime.now().weekday - 1; // Check if today
+                                        return BarChartGroupData(
+                                          x: entry.key,
+                                          barRods: [
+                                            BarChartRodData(
+                                              fromY: 0,
+                                              toY: entry.value.toDouble(),
+                                              color: isToday ? Color(0xFF070707) : Color(0xFF226CE0), // Different color for today
+                                              width: 24, // Thicker bar graph
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                          ],
+                                          showingTooltipIndicators: [], // Remove numbers above the bars
+                                        );
+                                      }).toList(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (_selectedBarData != null)
-                                Positioned(
-                                  top: MediaQuery.of(context).size.height * 0.25, // Move overlay higher
-                                  left: MediaQuery.of(context).size.width * 0.2,
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.8),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        _selectedBarData!,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Inter',
-                                          color: Colors.white, // White color for overlay
+                                if (_selectedBarData != null)
+                                  Positioned(
+                                    top: MediaQuery.of(context).size.height * 0.25, // Move overlay higher
+                                    left: MediaQuery.of(context).size.width * 0.2,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.8),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          _selectedBarData!,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontFamily: 'Inter',
+                                            color: Colors.white, // White color for overlay
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Food Waste Summary Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Food Waste Summary',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF226CE0),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.45, // Berikan ukuran eksplisit
-                                  child: _buildSummaryCard(
-                                    'Total Food Waste', 
-                                    '${totalWaste.toStringAsFixed(2)} g',
-                                    Icons.delete_outline,
-                                    Color(0xFFE57373), // Light red
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.45, // Berikan ukuran eksplisit
-                                  child: _buildSummaryCard(
-                                    'Carbon Emissions', 
-                                    '${(totalWaste * 2.5 / 1000).toStringAsFixed(2)} kg',
-                                    Icons.cloud_outlined,
-                                    Color(0xFF81C784), // Light green
-                                  ),
-                                ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Waste by Category Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Waste by Category',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF226CE0),
+                      const SizedBox(height: 24),
+                      
+                      // Food Waste Summary Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          ...categoryWaste.entries.map((entry) => _buildProgressBar(
-                            _translateCategory(entry.key), 
-                            entry.value, 
-                            totalWaste > 0 ? (entry.value / totalWaste) : 0,
-                            _getCategoryColor(entry.key),
-                          )),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Waste by Meal Time Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Waste by Meal Time',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF226CE0),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Food Waste Summary',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF070707),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildMealTimeItem('Breakfast', '${(weeklyWaste[0] ?? 0).toStringAsFixed(2)} g'),
-                          const SizedBox(height: 8),
-                          _buildMealTimeItem('Lunch', '${(weeklyWaste[1] ?? 0).toStringAsFixed(2)} g'),
-                          const SizedBox(height: 8),
-                          _buildMealTimeItem('Dinner', '${(weeklyWaste[2] ?? 0).toStringAsFixed(2)} g'),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Waste by Day Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      // child: Column(
-                      //   crossAxisAlignment: CrossAxisAlignment.start,
-                      //   children: [
-                      //     const Text(
-                      //       'Waste by Day',
-                      //       style: TextStyle(
-                      //         fontSize: 18,
-                      //         fontWeight: FontWeight.w700,
-                      //         fontFamily: 'Inter',
-                      //         color: Color(0xFF226CE0),
-                      //       ),
-                      //     ),
-                      //     const SizedBox(height: 16),
-                      //     ...weeklyWaste.entries.map((entry) {
-                      //       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                      //       return _buildDayWasteItem(days[entry.key], '${entry.value.toStringAsFixed(2)} g');
-                      //     }),
-                      //   ],
-                      // ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Most Wasted Items Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Most Wasted Items',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF226CE0),
+                            const SizedBox(height: 20),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.45, // Berikan ukuran eksplisit
+                                    child: _buildSummaryCard(
+                                      'Total Food Waste', 
+                                      '${totalWaste.toStringAsFixed(2)} g',
+                                      Icons.delete_outline,
+                                      Color(0xFFE57373), // Light red
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.45, // Berikan ukuran eksplisit
+                                    child: _buildSummaryCard(
+                                      'Carbon Emissions', 
+                                      '${(totalWaste * 2.5 / 1000).toStringAsFixed(2)} kg',
+                                      Icons.cloud_outlined,
+                                      Color(0xFF81C784), // Light green
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          ...mostWastedItems.take(3).map((item) => _buildWastedItemCard(
-                            item['itemName'], 
-                            '${item['weight'].toStringAsFixed(1)} g', 
-                            '${item['occurrences']} times'
-                          )),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Recommendations Section - Redesigned and translated
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Recommendations',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF226CE0),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Waste by Category Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildRecommendationCard(
-                            'Frequent Waste Time: Lunch',
-                            [
-                              'Reduce rice portion during lunch',
-                              'Choose vegetable-based meals or soups',
-                              'Start with a smaller portion, and add more if still hungry'
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Waste by Category',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF070707),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ...categoryWaste.entries.map((entry) => _buildProgressBar(
+                              _translateCategory(entry.key), 
+                              entry.value, 
+                              totalWaste > 0 ? (entry.value / totalWaste) : 0,
+                              _getCategoryColor(entry.key),
+                            )),
+                          ],
+                        ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Waste by Meal Time Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Waste by Meal Time',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF070707),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildMealTimeItem('Breakfast', '${(weeklyWaste[0] ?? 0).toStringAsFixed(2)} g'),
+                            const SizedBox(height: 8),
+                            _buildMealTimeItem('Lunch', '${(weeklyWaste[1] ?? 0).toStringAsFixed(2)} g'),
+                            const SizedBox(height: 8),
+                            _buildMealTimeItem('Dinner', '${(weeklyWaste[2] ?? 0).toStringAsFixed(2)} g'),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Waste by Day Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        // child: Column(
+                        //   crossAxisAlignment: CrossAxisAlignment.start,
+                        //   children: [
+                        //     const Text(
+                        //       'Waste by Day',
+                        //       style: TextStyle(
+                        //         fontSize: 18,
+                        //         fontWeight: FontWeight.w700,
+                        //         fontFamily: 'Inter',
+                        //         color: Color(0xFF226CE0),
+                        //       ),
+                        //     ),
+                        //     const SizedBox(height: 16),
+                        //     ...weeklyWaste.entries.map((entry) {
+                        //       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                        //       return _buildDayWasteItem(days[entry.key], '${entry.value.toStringAsFixed(2)} g');
+                        //     }),
+                        //   ],
+                        // ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Most Wasted Items Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Most Wasted Items',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF070707),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ...mostWastedItems.take(3).map((item) => _buildWastedItemCard(
+                              item['itemName'], 
+                              '${item['weight'].toStringAsFixed(1)} g', 
+                              '${item['occurrences']} times'
+                            )),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Recommendations Section - Redesigned and translated
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Recommendations',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF070707),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildRecommendationCard(
+                              'Frequent Waste Time: Lunch',
+                              [
+                                'Reduce rice portion during lunch',
+                                'Choose vegetable-based meals or soups',
+                                'Start with a smaller portion, and add more if still hungry'
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+      ),
     );
   }
 

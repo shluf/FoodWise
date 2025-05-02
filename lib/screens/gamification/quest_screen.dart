@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class LeaderboardScreen extends StatelessWidget {
-  const LeaderboardScreen({super.key});
+class QuestScreen extends StatelessWidget {
+  const QuestScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class LeaderboardScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               Text(
-                'Leaderboard Screen',
+                'Quest Screen',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ],

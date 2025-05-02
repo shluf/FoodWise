@@ -193,7 +193,7 @@ class FirestoreService {
       for (var doc in foodScansQuery.docs) {
         var data = doc.data();
         var userId = data['userId'] as String;
-        var weight = (data['weight'] ?? 0).toDouble();
+        var weight = (data['weight'] ?? 0).toDouble(); // Tambahkan nilai default 0
         
         if (userWasteSaved.containsKey(userId)) {
           userWasteSaved[userId] = userWasteSaved[userId]! + weight;
@@ -203,8 +203,8 @@ class FirestoreService {
           var userDoc = await _firestore.collection('users').doc(userId).get();
           if (userDoc.exists) {
             var userData = userDoc.data() as Map<String, dynamic>;
-            usernames[userId] = userData['username'] as String;
-            userPoints[userId] = userData['points'] as int;
+            usernames[userId] = userData['username'] as String? ?? 'Unknown'; // Nilai default 'Unknown'
+            userPoints[userId] = userData['points'] as int? ?? 0; // Nilai default 0
           }
         }
       }
@@ -233,6 +233,21 @@ class FirestoreService {
       return leaderboard;
     } catch (e) {
       print('Error getting leaderboard data: $e');
+      return [];
+    }
+  }
+
+  // Gamifikasi Collection
+  // =====================
+  
+  Future<List<QuestModel>> getAllQuestsData() async {
+    try {
+      final snapshot = await _firestore.collection('quests').get();
+      return snapshot.docs.map((doc) {
+        return QuestModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      print('Error fetching quests data: $e');
       return [];
     }
   }

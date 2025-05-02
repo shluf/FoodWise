@@ -1,33 +1,33 @@
 class QuestModel {
   final String id;
-  final String questName;
+  final String name;
   final String description;
-  final int pointsReward;
+  final int point;
   final String? imageUrl;
   
   QuestModel({
     required this.id,
-    required this.questName,
+    required this.name,
     required this.description,
-    required this.pointsReward,
+    required this.point,
     this.imageUrl,
   });
   
   factory QuestModel.fromMap(Map<String, dynamic> map, String id) {
     return QuestModel(
       id: id,
-      questName: map['questName'] ?? '',
+      name: map['name'] ?? '',
       description: map['description'] ?? '',
-      pointsReward: map['pointsReward'] ?? 0,
+      point: map['point'] ?? 0,
       imageUrl: map['imageUrl'],
     );
   }
   
   Map<String, dynamic> toMap() {
     return {
-      'questName': questName,
+      'name': name,
       'description': description,
-      'pointsReward': pointsReward,
+      'point': point,
       'imageUrl': imageUrl,
     };
   }

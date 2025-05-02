@@ -138,327 +138,311 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                setState(() {
-                  _isEditing = true;
-                });
-              },
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _updateProfile,
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // User photo & basic info
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: user.photoURL.isNotEmpty
-                        ? NetworkImage(user.photoURL)
-                        : null,
-                    child: user.photoURL.isEmpty
-                        ? const Icon(Icons.person, size: 50)
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    user.username,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+      appBar: null,
+      body: SafeArea( // Tambahkan SafeArea di sini
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // User photo & basic info
+              Center(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: user.photoURL.isNotEmpty
+                          ? NetworkImage(user.photoURL)
+                          : null,
+                      child: user.photoURL.isEmpty
+                          ? const Icon(Icons.person, size: 50)
+                          : null,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    user.email,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
+                    const SizedBox(height: 16),
+                    Text(
+                      user.username,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      user.email,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              
+              // Statistik Pengguna
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Statistik Anda',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(
+                            'Total Scan',
+                            '${foodScanProvider.foodScans.length}',
+                            Icons.image_search,
+                            Colors.blue,
+                          ),
+                          _buildStatItem(
+                            'Food Waste',
+                            '${foodScanProvider.totalWaste.toStringAsFixed(1)} g',
+                            Icons.delete_outline,
+                            Colors.red,
+                          ),
+                          _buildStatItem(
+                            'CO2 Saved',
+                            '${foodScanProvider.totalCarbonSaved.toStringAsFixed(1)} kg',
+                            Icons.eco,
+                            Colors.green,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            
-            // Statistik Pengguna
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+              
+              const SizedBox(height: 24),
+              
+              // Profile details form
+              Form(
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Statistik Anda',
+                      'Detail Profil',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 16),
+                    
+                    // Username
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Pengguna',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      readOnly: !_isEditing,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Nama pengguna tidak boleh kosong';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Gender
+                    DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: const InputDecoration(
+                        labelText: 'Jenis Kelamin',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.wc),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Laki-laki',
+                          child: Text('Laki-laki'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Perempuan',
+                          child: Text('Perempuan'),
+                        ),
+                      ],
+                      onChanged: _isEditing
+                          ? (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedGender = value;
+                                });
+                              }
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Body weight and height
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildStatItem(
-                          'Total Scan',
-                          '${foodScanProvider.foodScans.length}',
-                          Icons.image_search,
-                          Colors.blue,
+                        Expanded(
+                          child: TextFormField(
+                            controller: _weightController,
+                            decoration: const InputDecoration(
+                              labelText: 'Berat Badan (kg)',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.monitor_weight),
+                            ),
+                            keyboardType: TextInputType.number,
+                            readOnly: !_isEditing,
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                final weight = double.tryParse(value);
+                                if (weight == null) {
+                                  return 'Format tidak valid';
+                                }
+                                if (weight <= 0) {
+                                  return 'Berat harus > 0';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        _buildStatItem(
-                          'Food Waste',
-                          '${foodScanProvider.totalWaste.toStringAsFixed(1)} g',
-                          Icons.delete_outline,
-                          Colors.red,
-                        ),
-                        _buildStatItem(
-                          'CO2 Saved',
-                          '${foodScanProvider.totalCarbonSaved.toStringAsFixed(1)} kg',
-                          Icons.eco,
-                          Colors.green,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _heightController,
+                            decoration: const InputDecoration(
+                              labelText: 'Tinggi Badan (cm)',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.height),
+                            ),
+                            keyboardType: TextInputType.number,
+                            readOnly: !_isEditing,
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                final height = double.tryParse(value);
+                                if (height == null) {
+                                  return 'Format tidak valid';
+                                }
+                                if (height <= 0) {
+                                  return 'Tinggi harus > 0';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Profile details form
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Detail Profil',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Username
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Pengguna',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    readOnly: !_isEditing,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Nama pengguna tidak boleh kosong';
+              
+              const SizedBox(height: 32),
+              
+              // Logout button
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Keluar'),
+                        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Keluar'),
+                          ),
+                        ],
+                      ),
+                    );
+                    
+                    if (confirm == true) {
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      await authProvider.signOut();
+                      if (mounted) {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login',
+                          (route) => false,
+                        );
                       }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Gender
-                  DropdownButtonFormField<String>(
-                    value: _selectedGender,
-                    decoration: const InputDecoration(
-                      labelText: 'Jenis Kelamin',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.wc),
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'Laki-laki',
-                        child: Text('Laki-laki'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Perempuan',
-                        child: Text('Perempuan'),
-                      ),
-                    ],
-                    onChanged: _isEditing
-                        ? (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedGender = value;
-                              });
-                            }
-                          }
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Body weight and height
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _weightController,
-                          decoration: const InputDecoration(
-                            labelText: 'Berat Badan (kg)',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.monitor_weight),
-                          ),
-                          keyboardType: TextInputType.number,
-                          readOnly: !_isEditing,
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty) {
-                              final weight = double.tryParse(value);
-                              if (weight == null) {
-                                return 'Format tidak valid';
-                              }
-                              if (weight <= 0) {
-                                return 'Berat harus > 0';
-                              }
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _heightController,
-                          decoration: const InputDecoration(
-                            labelText: 'Tinggi Badan (cm)',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.height),
-                          ),
-                          keyboardType: TextInputType.number,
-                          readOnly: !_isEditing,
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty) {
-                              final height = double.tryParse(value);
-                              if (height == null) {
-                                return 'Format tidak valid';
-                              }
-                              if (height <= 0) {
-                                return 'Tinggi harus > 0';
-                              }
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 32),
-            
-            // Logout button
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(vertical: 16),
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Keluar'),
-                      content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Batal'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Keluar'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (confirm == true) {
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    await authProvider.signOut();
-                    if (mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/login',
-                        (route) => false,
-                      );
                     }
-                  }
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text('Keluar dari Akun'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Keluar dari Akun'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
-            ),
-            
-            // Danger zone
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Zona Bahaya',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Tindakan di bawah ini tidak dapat dibatalkan. Harap berhati-hati sebelum melanjutkan.',
-                    style: TextStyle(
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_forever),
-                      label: const Text('Hapus Akun'),
-                      onPressed: _confirmDeleteAccount,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+              
+              // Danger zone
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Zona Bahaya',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Tindakan di bawah ini tidak dapat dibatalkan. Harap berhati-hati sebelum melanjutkan.',
+                      style: TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.delete_forever),
+                        label: const Text('Hapus Akun'),
+                        onPressed: _confirmDeleteAccount,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -497,4 +481,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-} 
+}
