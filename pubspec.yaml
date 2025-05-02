@@ -52,6 +52,7 @@ dependencies:
   fl_chart: ^0.63.0
   table_calendar: ^3.0.9
   cached_network_image: ^3.2.3
+  palette_generator: ^0.3.3+6
   
   # Auth
   google_sign_in: ^6.1.4

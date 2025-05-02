@@ -139,6 +139,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     return Scaffold(
       appBar: null,
+      backgroundColor: Colors.transparent, // Buat latar belakang transparan
+
       body: SafeArea( // Tambahkan SafeArea di sini
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),

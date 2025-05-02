@@ -3,6 +3,8 @@ import 'package:foodwise/screens/gamification/leaderboard_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // Tambahkan import ini
+import 'package:google_fonts/google_fonts.dart';
+import 'package:palette_generator/palette_generator.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../providers/gamification_provider.dart';
@@ -14,8 +16,8 @@ import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
 import '../gamification/quest_screen.dart';
 import '../../screens/food_waste_scan_screen.dart';
-import '../progress/progresss_boardig_screen.dart';
-import '../gamification//main_screen.dart';
+import '../progress/progress_boardig_screen.dart';
+import '../gamification/main_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,99 +28,178 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  
+  Color? _dominantColor;
+
   @override
   void initState() {
     super.initState();
+    _extractDominantColor();
 
-    // Atur status bar agar ikon menjadi terang (dark mode)
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent, // Buat status bar transparan
-        statusBarIconBrightness: Brightness.light, // Gunakan ikon terang untuk latar belakang gelap
-      ),
-    );
-    
     // Validasi sesi
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
       final gamificationProvider = Provider.of<GamificationProvider>(context, listen: false);
-      
-      // Validasi sesi lokal dengan Firebase di belakang layar
+
       authProvider.validateSession();
-      
+
       if (authProvider.user != null) {
         foodScanProvider.loadUserFoodScans(authProvider.user!.id);
         foodScanProvider.loadWeeklyFoodWaste(authProvider.user!.id);
         gamificationProvider.loadLeaderboard();
         gamificationProvider.loadQuests();
-        
-        // Cek apakah aplikasi dibuka dari widget
-        _checkLaunchFromWidget();
       }
     });
   }
-  
-  Future<void> _checkLaunchFromWidget() async {
-    // Periksa apakah aplikasi dibuka dari widget untuk scan
-    final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
-    final launchedFromWidget = await foodScanProvider.checkLaunchFromWidget();
-    
-    print('DEBUG: HomeScreen _checkLaunchFromWidget called, result: $launchedFromWidget');
-    
-    if (launchedFromWidget && mounted) {
-      // Delay sedikit agar UI stabil sebelum navigasi
-      await Future.delayed(const Duration(milliseconds: 300));
-      
-      if (!mounted) return;
-      
-      print('DEBUG: Navigating to ScanScreen from widget launch');
-      // Buka layar scan otomatis
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ScanScreen()),
-      );
-    }
+
+  Future<void> _extractDominantColor() async {
+    final paletteGenerator = await PaletteGenerator.fromImageProvider(
+      const AssetImage('assets/images/background-pattern.png'),
+    );
+    setState(() {
+      _dominantColor = paletteGenerator.dominantColor?.color ?? Colors.transparent;
+    });
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: _dominantColor, // Gunakan warna dominan
+        statusBarIconBrightness: Brightness.light, // Gunakan ikon terang
+      ),
+    );
   }
-  
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    final foodScanProvider = Provider.of<FoodScanProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
-    
     final screens = [
-      _buildHomeContent(context, foodScanProvider, authProvider),
+      _buildHomeContent(context),
       const ProgressBoardingScreen(),
       Container(), // Placeholder untuk tombol scan
       const MainScreen(),
       const ProfileScreen(),
     ];
-    
+
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex == 2 ? 0 : _selectedIndex, // Jika tombol scan dipilih, tetap tampilkan home screen
-        children: screens,
+      body: Stack(
+        children: [
+          // Gambar latar belakang
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/background-pattern.png',
+              width: MediaQuery.of(context).size.width,
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header dengan padding
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          // Gambar logo Ahshaka
+                          ClipOval(
+                            child: Image.asset(
+                              'assets/images/logo-ahshaka.png',
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Tulisan "Ahshaka"
+                          Text(
+                            'Ahshaka',
+                            style: GoogleFonts.merriweather(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Ikon piala dan jumlah poin
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8), // Transparansi pada latar belakang
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events,
+                              color: Colors.amber,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '120', // Contoh jumlah poin
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Konten utama tanpa padding
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex == 2 ? 0 : _selectedIndex,
+                    children: screens,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScanScreen()),
-          );
-        },
-        backgroundColor: Theme.of(context).primaryColor,
-        elevation: 8,
-        shape: const CircleBorder(),
-        child: const ImageIcon(
-          AssetImage('assets/images/scan.png'),
-          size: 28,
+      floatingActionButton: SizedBox(
+        width: 60, 
+        height: 60,
+        child: FloatingActionButton(
+          onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ScanScreen()),
+        );
+          },
+          backgroundColor: Theme.of(context).primaryColor,
+          elevation: 8,
+          shape: const CircleBorder(),
+          child: Center( 
+        child: Image.asset(
+          'assets/images/scan.png',
+          width: 32, // Ukuran gambar ditingkatkan agar proporsional
+          height: 32, // Ukuran gambar ditingkatkan agar proporsional
+          fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+        ),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -127,84 +208,39 @@ class _HomeScreenState extends State<HomeScreen> {
         notchMargin: 8,
         color: Colors.white,
         elevation: 10,
+        clipBehavior: Clip.antiAlias, // Tambahkan ini untuk mencegah overflow
+        height: 100,
         child: SizedBox(
-          height: 60,
+          height: 80, // Tinggi ditingkatkan dari 60 ke 80
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Left side of FAB
               Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                _buildNavBarItem(0, Icons.home, 'Beranda'),
-                InkWell(
-                  onTap: () => _onItemTapped(1),
-                  child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Image.asset(
-                    'assets/images/progress.png',
-                    width: 28,
-                    height: 28,
+                    Flexible( // Tambahkan Flexible untuk mencegah overflow
+                      child: _buildNavBarItem(0, Icons.home, 'Beranda'),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                    'Progress',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _selectedIndex == 1
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey,
-                      fontWeight: _selectedIndex == 1
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    ),
+                    Flexible(
+                      child: _buildNavBarItem(1, Icons.show_chart, 'Progress'),
                     ),
                   ],
-                  ),
                 ),
-                ],
               ),
-              ),
-              
-              // Space for FAB
               const SizedBox(width: 80),
-              
-              // Right side of FAB
               Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                InkWell(
-                  onTap: () => _onItemTapped(3),
-                  child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Image.asset(
-                    'assets/images/quest.png',
-                    width: 28,
-                    height: 28,
+                    Flexible(
+                      child: _buildNavBarItem(3, Icons.assignment, 'Quest'),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                    'Quest',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _selectedIndex == 3
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey,
-                      fontWeight: _selectedIndex == 3
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    ),
+                    Flexible(
+                      child: _buildNavBarItem(4, Icons.settings, 'Setting'),
                     ),
                   ],
-                  ),
                 ),
-                _buildNavBarItem(4, Icons.settings, 'Setting'),
-                ],
-              ),
               ),
             ],
           ),
@@ -212,10 +248,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildNavBarItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
-    
+
     return InkWell(
       onTap: () => _onItemTapped(index),
       borderRadius: BorderRadius.circular(8),
@@ -226,12 +262,13 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               icon,
+              size: 30, // Ukuran ikon dikecilkan
               color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
             ),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10, // Ukuran font teks dikecilkan
                 color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -241,13 +278,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  Widget _buildHomeContent(BuildContext context, FoodScanProvider foodScanProvider, AuthProvider authProvider) {
+
+  Widget _buildHomeContent(BuildContext context) {
+    final foodScanProvider = Provider.of<FoodScanProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    
     final unfinishedFoodScans = foodScanProvider.foodScans
         .where((scan) => !scan.isDone)
         .toList();
     
     return Scaffold(
+      backgroundColor: Colors.transparent, // Buat latar belakang transparan
+
       appBar:null,
       body: SafeArea( // Tambahkan SafeArea di sini
         child: SingleChildScrollView(
@@ -256,20 +298,60 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Greeting section
-                Text(
-                  'Halo, ${authProvider.user?.username ?? 'Pengguna'}!',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 40),
+                // Greeting section with background and shadow
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Selamat datang di FoodWise',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
+                  
+                  child: Row(
+                    children: [
+                      // Text section
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hi, ${authProvider.user?.username ?? 'User'}!',
+                              style: TextStyle(
+                                fontSize: 18, // Ukuran lebih kecil
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor, // Warna teks primary
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "You haven't done anything yet, scan now to start.",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Image section
+                      SizedBox(
+                        width: 80, // Perbesar ukuran gambar
+                        height: 80,
+                        child: Image.asset(
+                          'assets/images/person-on-fire.png', // Ganti dengan path gambar Anda
+                          fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -565,7 +647,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
     return Column(
       children: [
