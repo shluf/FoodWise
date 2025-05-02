@@ -99,14 +99,16 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScanScreen()),
+        context,
+        MaterialPageRoute(builder: (context) => const ScanScreen()),
           );
         },
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 8,
-        child: const Icon(
-          Icons.camera_alt,
+        shape: const CircleBorder(),
+        child: const 
+        ImageIcon(
+          AssetImage('assets/images/scan.png'),
           size: 28,
         ),
       ),

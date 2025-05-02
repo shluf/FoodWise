@@ -1064,4 +1064,4 @@ class _ScanScreenState extends State<ScanScreen> {
       return Colors.red;
     }
   }
-} 
+}

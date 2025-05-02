@@ -54,72 +54,72 @@ class MyApp extends StatelessWidget {
       title: 'FoodWise',
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
-          primary: AppColors.primaryColor,
-          secondary: AppColors.secondaryColor,
-          surface: AppColors.surfaceColor,
-          background: AppColors.backgroundColor,
+          primary: Color(0xFF070707),
+          secondary: Color(0xFFD9DDE0),
+          surface: Color(0xFFFFFFFF),
+          background: Color(0xFFF5F5F5),
           error: AppColors.errorColor,
         ),
-        scaffoldBackgroundColor: AppColors.backgroundColor,
+        scaffoldBackgroundColor: Color(0xFFF5F5F5),
         fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primaryColor,
+          backgroundColor: Color(0xFF070707),
           foregroundColor: AppColors.textLight,
           elevation: 0,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryColor,
-            foregroundColor: AppColors.textLight,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            elevation: 2,
+        backgroundColor: Color(0xFF070707),
+        foregroundColor: AppColors.textLight,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        elevation: 2,
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primaryColor,
-            side: const BorderSide(color: AppColors.primaryColor),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+        foregroundColor: Color(0xFF070707),
+        side: const BorderSide(color: Color(0xFF070707)),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.primaryColor,
+        foregroundColor: Color(0xFF070707),
           ),
         ),
         cardTheme: CardTheme(
-          color: AppColors.surfaceColor,
+          color: Color(0xFFFFFFFF),
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.primaryColor,
+          backgroundColor: Color(0xFF070707),
           foregroundColor: AppColors.textLight,
           elevation: 4,
         ),
         textTheme: const TextTheme(
           titleLarge: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.bold,
           ),
           titleMedium: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
           ),
           bodyLarge: TextStyle(color: AppColors.textPrimary),
           bodyMedium: TextStyle(color: AppColors.textSecondary),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.surfaceColor,
-          selectedItemColor: AppColors.primaryColor,
+          backgroundColor: Color(0xFFFFFFFF),
+          selectedItemColor: Color(0xFF070707),
           unselectedItemColor: AppColors.textSecondary,
         ),
         useMaterial3: true,
