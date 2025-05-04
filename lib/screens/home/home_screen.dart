@@ -16,8 +16,10 @@ import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
 import '../gamification/quest_screen.dart';
 import '../../screens/food_waste_scan_screen.dart';
-import '../progress/progress_boardig_screen.dart';
+import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
+import '../../services/firestore_service.dart';
+import '../../services/ai_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -282,6 +284,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeContent(BuildContext context) {
     final foodScanProvider = Provider.of<FoodScanProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final firestoreService = FirestoreService();
+    final aiService = AIService('AIzaSyCY-SeZV_qqdDrYZDqpnzWwZcQ4FJQiK1Y'); // Replace with your actual API key
     
     final unfinishedFoodScans = foodScanProvider.foodScans
         .where((scan) => !scan.isDone)
@@ -639,6 +643,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                   ],
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (authProvider.user != null) {
+                      await firestoreService.generateAndSaveWeeklySummaryWithAI(
+                        authProvider.user!.id,
+                        aiService,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Weekly summary generated successfully!')),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('User not logged in.')),
+                      );
+                    }
+                  },
+                  child: const Text('Generate Weekly Summary'),
                 ),
               ],
             ),
