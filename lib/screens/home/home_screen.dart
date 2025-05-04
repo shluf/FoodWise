@@ -20,6 +20,8 @@ import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ai_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -285,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final foodScanProvider = Provider.of<FoodScanProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final firestoreService = FirestoreService();
-    final aiService = AIService('AIzaSyCY-SeZV_qqdDrYZDqpnzWwZcQ4FJQiK1Y'); // Replace with your actual API key
+    final aiService = AIService(dotenv.env['GEMINI_API_KEY']!); 
     
     final unfinishedFoodScans = foodScanProvider.foodScans
         .where((scan) => !scan.isDone)

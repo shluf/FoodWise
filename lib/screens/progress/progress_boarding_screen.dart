@@ -8,6 +8,7 @@ import '../../models/food_scan_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ai_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 
 class ProgressBoardingScreen extends StatefulWidget {
   const ProgressBoardingScreen({super.key});
@@ -19,14 +20,14 @@ class ProgressBoardingScreen extends StatefulWidget {
 class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   String? _selectedBarData;
   final FirestoreService _firestoreService = FirestoreService();
-  final AIService _aiService = AIService('AIzaSyCY-SeZV_qqdDrYZDqpnzWwZcQ4FJQiK1Y');
+  final AIService _aiService = AIService(dotenv.env['GEMINI_API_KEY']!);
   Map<String, dynamic>? _weeklySummary;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchWeeklySummary();
+  _fetchWeeklySummary();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
