@@ -6,7 +6,7 @@ import '../models/leaderboard_entry_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Food Scans Collection
   // =====================
 
@@ -16,10 +16,10 @@ class FirestoreService {
         .where('userId', isEqualTo: userId)
         .orderBy('scanTime', descending: true)
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return FoodScanModel.fromMap(doc.data(), doc.id);
-          }).toList();
+        .asyncMap((snapshot) async {
+          return Future.wait(snapshot.docs.map((doc) async {
+            return await FoodScanModel.fromMapAsync(doc.data(), doc.id);
+          }).toList());
         });
   }
   
@@ -56,26 +56,29 @@ class FirestoreService {
       QuerySnapshot snapshot = await _firestore
           .collection('foodScans')
           .where('userId', isEqualTo: userId)
-          .where('isDone', isEqualTo: true) // Perbaikan: gunakan 'isDone' bukan 'isFinished'
+          .where('isDone', isEqualTo: true)
           .get();
       
       Map<DateTime, double> weeklyFoodWaste = {};
       
       for (var doc in snapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
-        DateTime scanTime = (data['scanTime'] as Timestamp).toDate();
-        double weight = (data['weight'] ?? 0).toDouble();
-        
-        DateTime startOfWeek = DateTime(
-          scanTime.year, 
-          scanTime.month, 
-          scanTime.day - scanTime.weekday + 1
-        );
-        
-        if (weeklyFoodWaste.containsKey(startOfWeek)) {
-          weeklyFoodWaste[startOfWeek] = weeklyFoodWaste[startOfWeek]! + weight;
-        } else {
-          weeklyFoodWaste[startOfWeek] = weight;
+
+        if (data['scanTime'] is Timestamp) {
+          DateTime scanTime = (data['scanTime'] as Timestamp).toDate();
+          double weight = (data['weight'] ?? 0).toDouble();
+          
+          DateTime startOfWeek = DateTime(
+            scanTime.year, 
+            scanTime.month, 
+            scanTime.day - scanTime.weekday + 1
+          );
+          
+          if (weeklyFoodWaste.containsKey(startOfWeek)) {
+            weeklyFoodWaste[startOfWeek] = weeklyFoodWaste[startOfWeek]! + weight;
+          } else {
+            weeklyFoodWaste[startOfWeek] = weight;
+          }
         }
       }
       
@@ -193,7 +196,7 @@ class FirestoreService {
       for (var doc in foodScansQuery.docs) {
         var data = doc.data();
         var userId = data['userId'] as String;
-        var weight = (data['weight'] ?? 0).toDouble(); // Tambahkan nilai default 0
+        var weight = (data['weight'] ?? 0).toDouble();
         
         if (userWasteSaved.containsKey(userId)) {
           userWasteSaved[userId] = userWasteSaved[userId]! + weight;
@@ -203,8 +206,8 @@ class FirestoreService {
           var userDoc = await _firestore.collection('users').doc(userId).get();
           if (userDoc.exists) {
             var userData = userDoc.data() as Map<String, dynamic>;
-            usernames[userId] = userData['username'] as String? ?? 'Unknown'; // Nilai default 'Unknown'
-            userPoints[userId] = userData['points'] as int? ?? 0; // Nilai default 0
+            usernames[userId] = userData['username'] as String? ?? 'Unknown';
+            userPoints[userId] = userData['points'] as int? ?? 0;
           }
         }
       }
