@@ -10,6 +10,7 @@ import 'providers/auth_provider.dart';
 import 'providers/food_scan_provider.dart';
 import 'providers/gamification_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/welcome_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/onboarding/profile_onboarding_screen.dart';
 import 'screens/scan/scan_screen.dart';
@@ -138,6 +139,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
+        '/welcome': (context) => const WelcomeScreen(),
         '/profile': (context) => const ProfileOnboardingScreen(),
         '/scan': (context) => const ScanScreen(),
       },
@@ -241,39 +243,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
           }
           
           // Jika ternyata sudah tidak login (validasi di belakang gagal)
-          return const LoginScreen();
+          return const WelcomeScreen();
         },
       );
     }
 
-    // Jika belum login secara lokal, gunakan AuthProvider normal
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        // Jika loading, tampilkan indikator loading
-        if (authProvider.isLoading) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-        
-        // Pengguna belum login
-        if (!authProvider.isLoggedIn) {
-          print('DEBUG: User not logged in');
-          return const LoginScreen();
-        }
-        
-        // Pengguna sudah login tapi profil belum lengkap
-        if (!_isProfileComplete(context)) {
-          print('DEBUG: Navigating to profile onboarding');
-          return const ProfileOnboardingScreen();
-        }
-        
-        // Pengguna sudah login dan profil sudah lengkap
-        print('DEBUG: Navigating to home screen');
-        return const HomeScreen();
-      },
-    );
+    // Jika belum login secara lokal, tampilkan welcome screen
+    return const WelcomeScreen();
   }
 }

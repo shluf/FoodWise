@@ -39,21 +39,21 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else if (!success && mounted) {
-        String errorMessage = authProvider.error ?? 'Gagal masuk';
+        String errorMessage = authProvider.error ?? 'Failed to sign in';
         
         if (errorMessage.contains('user-not-found')) {
           // Tampilkan dialog untuk mendaftar
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Akun Tidak Ditemukan'),
-              content: const Text('Email tidak terdaftar dalam sistem kami. Apakah Anda ingin mendaftar?'),
+              title: const Text('Account Not Found'),
+              content: const Text('Email is not registered in our system. Would you like to register?'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Batal'),
+                  child: const Text('Cancel'),
                 ),
                 FilledButton(
                   onPressed: () {
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     );
                   },
-                  child: const Text('Daftar'),
+                  child: const Text('Register'),
                 ),
               ],
             ),
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Tampilkan pesan error password salah
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Password salah. Silakan coba lagi.'),
+              content: Text('Wrong password. Please try again.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.error ?? 'Gagal masuk dengan Google')),
+        SnackBar(content: Text(authProvider.error ?? 'Failed to sign in with Google')),
       );
     }
   }
@@ -111,6 +111,33 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.black),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -119,69 +146,84 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo and App name
-                const Icon(
-                  Icons.eco,
-                  size: 80,
-                  color: Colors.green,
-                ),
-                const SizedBox(height: 16),
+                // Header
                 const Text(
-                  'FoodWise',
-                  textAlign: TextAlign.center,
+                  'Login',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 35,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Kurangi Sampah Makanan, Selamatkan Bumi',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
                 
                 // Login Form
                 Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Email field
+                      const Text(
+                        'Email',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your email',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan masukkan email';
+                            return 'Please enter your email';
                           }
                           if (!value.contains('@')) {
-                            return 'Email tidak valid';
+                            return 'Invalid email';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      
+                      // Password field
+                      const Text(
+                        'Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
-                          labelText: 'Kata Sandi',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock),
+                          hintText: 'Enter your password',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible 
                                   ? Icons.visibility 
                                   : Icons.visibility_off,
+                              color: Colors.grey,
                             ),
                             onPressed: () {
                               setState(() {
@@ -192,15 +234,40 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan masukkan kata sandi';
+                            return 'Please enter your password';
                           }
                           if (value.length < 6) {
-                            return 'Kata sandi harus minimal 6 karakter';
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
                       ),
+                      
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // Implementasi lupa kata sandi
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
                       const SizedBox(height: 24),
+                      
+                      // Login button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -208,27 +275,35 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: authProvider.isLoading
                               ? null
                               : _signInWithEmailAndPassword,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            elevation: 0,
+                          ),
                           child: authProvider.isLoading
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Masuk'),
+                              : const Text('Get Started'),
                         ),
                       ),
                     ],
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 const Row(
                   children: [
                     Expanded(child: Divider()),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text('atau'),
+                      child: Text('Or'),
                     ),
                     Expanded(child: Divider()),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 
                 // Google Sign In Button
                 SizedBox(
@@ -238,10 +313,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: authProvider.isLoading 
                         ? null 
                         : _signInWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 24, color: Colors.red),
-                    label: const Text('Masuk dengan Google'),
+                    icon: Image.asset('assets/images/google_logo.png', height: 20),
+                    label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                       side: const BorderSide(color: Colors.grey),
+                      foregroundColor: Colors.black,
                     ),
                   ),
                 ),
@@ -250,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Belum memiliki akun?'),
+                    const Text('Don\'t have an account?'),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -260,7 +339,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      child: const Text('Daftar'),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ],
                 ),

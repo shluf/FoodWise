@@ -183,6 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 60, 
         height: 60,
         child: FloatingActionButton(
+          heroTag: 'home',
           onPressed: () {
         Navigator.push(
           context,

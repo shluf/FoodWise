@@ -83,8 +83,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daftar'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.black),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -94,28 +117,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.eco,
-                  size: 60,
-                  color: Colors.green,
-                ),
-                const SizedBox(height: 16),
+                // Header
                 const Text(
-                  'Bergabunglah dengan FoodWise',
-                  textAlign: TextAlign.center,
+                  'Register',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 35,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Ayo berkontribusi dalam mengurangi sampah makanan',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -124,54 +132,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Name field
+                      const Text(
+                        'Name',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _nameController,
                         keyboardType: TextInputType.name,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your name',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan masukkan nama';
+                            return 'Please enter your name';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      
+                      // Email field
+                      const Text(
+                        'Email',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your email',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan masukkan email';
+                            return 'Please enter your email';
                           }
                           if (!value.contains('@')) {
-                            return 'Email tidak valid';
+                            return 'Invalid email';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      
+                      // Password field
+                      const Text(
+                        'Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
-                          labelText: 'Kata Sandi',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock),
+                          hintText: 'Enter your password',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible 
                                   ? Icons.visibility 
                                   : Icons.visibility_off,
+                              color: Colors.grey,
                             ),
                             onPressed: () {
                               setState(() {
@@ -182,34 +236,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan masukkan kata sandi';
+                            return 'Please enter your password';
                           }
                           if (value.length < 6) {
-                            return 'Kata sandi harus minimal 6 karakter';
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      
+                      // Confirm Password field
+                      const Text(
+                        'Confirm Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: !_isPasswordVisible,
-                        decoration: const InputDecoration(
-                          labelText: 'Konfirmasi Kata Sandi',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.lock),
+                        decoration: InputDecoration(
+                          hintText: 'Confirm password',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.black, width: 3.0),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Silakan konfirmasi kata sandi';
+                            return 'Please confirm your password';
                           }
                           if (value != _passwordController.text) {
-                            return 'Kata sandi tidak cocok';
+                            return 'Passwords do not match';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 24),
+                      
+                      // Register button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -217,9 +288,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onPressed: authProvider.isLoading 
                               ? null 
                               : _register,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            elevation: 0,
+                          ),
                           child: authProvider.isLoading
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Daftar'),
+                              : const Text('Continue'),
                         ),
                       ),
                     ],
@@ -230,12 +309,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Sudah memiliki akun?'),
+                    const Text('Already have an account?'),
                     TextButton(
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      child: const Text('Masuk'),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ],
                 ),
