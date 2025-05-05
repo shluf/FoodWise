@@ -52,18 +52,22 @@ class FoodScanProvider extends ChangeNotifier {
   double get totalCarbonSaved => _totalCarbonSaved;
   File? get lastCapturedImage => _lastCapturedImage;
   
-  void loadUserFoodScans(String userId) {
-    _setLoading(true);
-    
-    _firestoreService.getUserFoodScans(userId).listen((foodScans) {
-      _foodScans = foodScans;
-      _calculateTotalStatistics();
-      _updateWidget();
-      _setLoading(false);
-    }, onError: (e) {
-      _error = 'Gagal memuat data scan makanan: $e';
-      _setLoading(false);
-    });
+  Future<void> loadUserFoodScans(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final foodScansStream = _firestoreService.getUserFoodScans(userId);
+      foodScansStream.listen((foodScans) {
+        _foodScans = foodScans;
+        _isLoading = false;
+        notifyListeners();
+      });
+    } catch (e) {
+      print('Error loading user food scans: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
   }
   
   Future<Map<String, dynamic>?> scanFoodImage(File imageFile) async {

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class PotentialFoodWasteItem {
   final String itemName;
@@ -115,6 +117,68 @@ class FoodScanModel {
       afterImageUrl: map['afterImageUrl'],
       aiRemainingPercentage: map['aiRemainingPercentage'] != null ? (map['aiRemainingPercentage']).toDouble() : null,
       aiConfidence: map['aiConfidence'] != null ? (map['aiConfidence']).toDouble() : null,
+    );
+  }
+
+  static Future<FoodScanModel> fromMapAsync(Map<String, dynamic> map, String id) async {
+    return compute(_parseFoodScanModel, {'map': map, 'id': id});
+  }
+
+  static FoodScanModel _parseFoodScanModel(Map<String, dynamic> args) {
+    final map = args['map'] as Map<String, dynamic>;
+    final id = args['id'] as String;
+
+    List<PotentialFoodWasteItem>? potentialItems;
+    if (map['potentialFoodWasteItems'] != null) {
+      potentialItems = (map['potentialFoodWasteItems'] as List)
+          .map((item) => PotentialFoodWasteItem.fromMap(item))
+          .toList();
+    }
+
+    List<FoodItem> foodItems = [];
+    if (map['foodItems'] != null) {
+      foodItems = (map['foodItems'] as List)
+          .map((item) => FoodItem.fromMap(item))
+          .toList();
+    }
+
+    // Validasi tipe data scanTime
+    DateTime scanTime;
+    if (map['scanTime'] is Timestamp) {
+      scanTime = (map['scanTime'] as Timestamp).toDate();
+    } else if (map['scanTime'] is String) {
+      scanTime = DateTime.parse(map['scanTime']);
+    } else {
+      throw Exception('Invalid scanTime format for document ID: $id');
+    }
+
+    DateTime finishTime;
+    if (map['finishTime'] is Timestamp) {
+      finishTime = (map['finishTime'] as Timestamp).toDate();
+    } else if (map['finishTime'] is String) {
+      finishTime = DateTime.parse(map['finishTime']);
+    } else {
+      finishTime = DateTime.now().add(const Duration(days: 7));
+    }
+
+    return FoodScanModel(
+      id: id,
+      userId: map['userId'] ?? '',
+      foodName: map['foodName'] ?? '',
+      scanTime: scanTime,
+      finishTime: finishTime,
+      isDone: map['isDone'] ?? false,
+      isEaten: map['isEaten'] ?? false,
+      foodItems: foodItems,
+      potentialFoodWasteItems: potentialItems,
+      imageUrl: map['imageUrl'],
+      afterImageUrl: map['afterImageUrl'],
+      aiRemainingPercentage: map['aiRemainingPercentage'] != null
+          ? (map['aiRemainingPercentage']).toDouble()
+          : null,
+      aiConfidence: map['aiConfidence'] != null
+          ? (map['aiConfidence']).toDouble()
+          : null,
     );
   }
   

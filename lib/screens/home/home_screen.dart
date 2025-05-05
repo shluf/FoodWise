@@ -16,8 +16,57 @@ import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
 import '../gamification/quest_screen.dart';
 import '../../screens/food_waste_scan_screen.dart';
-import '../progress/progress_boardig_screen.dart';
+import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
+import '../../services/firestore_service.dart';
+import '../../services/ai_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:math' as math;
+
+// Menambahkan CustomPainter untuk garis putus-putus
+class DashedCircleBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  
+  DashedCircleBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.5,
+  });
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+    
+    final double radius = math.min(size.width, size.height) / 2;
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    
+    // Menghitung jumlah dash
+    final double dashLength = 3;
+    final double gapLength = 3;
+    final double dashCount = (2 * math.pi * radius) / (dashLength + gapLength);
+    
+    // Membuat dash
+    for (int i = 0; i < dashCount.toInt(); i++) {
+      final double startAngle = i * (dashLength + gapLength) / radius;
+      final double endAngle = startAngle + dashLength / radius;
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        endAngle - startAngle,
+        false,
+        paint,
+      );
+    }
+  }
+  
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +78,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   Color? _dominantColor;
+  DateTime _selectedDate = DateTime.now();
+  final DateTime _firstDay = DateTime.now().subtract(const Duration(days: 6));
+  final DateTime _lastDay = DateTime.now().add(const Duration(days: 1));
 
   @override
   void initState() {
@@ -283,29 +335,33 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeContent(BuildContext context) {
     final foodScanProvider = Provider.of<FoodScanProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final firestoreService = FirestoreService();
+    final aiService = AIService(dotenv.env['GEMINI_API_KEY']!); 
     
     final unfinishedFoodScans = foodScanProvider.foodScans
         .where((scan) => !scan.isDone)
         .toList();
     
     return Scaffold(
-      backgroundColor: Colors.transparent, // Buat latar belakang transparan
-
-      appBar:null,
-      body: SafeArea( // Tambahkan SafeArea di sini
+      backgroundColor: Colors.transparent,
+      appBar: null,
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
+                // Weekly Calendar di paling atas
+                _buildScrollableDayCircles(context, foodScanProvider),
+                
+                const SizedBox(height: 16),
+                
                 // Greeting section with background and shadow
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -317,8 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   
                   child: Row(
                     children: [
-                      // Text section
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,16 +380,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'Hi, ${authProvider.user?.username ?? 'User'}!',
                               style: TextStyle(
-                                fontSize: 18, // Ukuran lebih kecil
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor, // Warna teks primary
+                                color: Theme.of(context).primaryColor,
                               ),
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              "You haven't done anything yet, scan now to start.",
+                              "You haven't done anything, scan now to start!",
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: Colors.grey,
                               ),
                             ),
@@ -343,302 +397,249 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Image section
                       SizedBox(
-                        width: 80, // Perbesar ukuran gambar
-                        height: 80,
+                        width: 64,
+                        height: 64,
                         child: Image.asset(
-                          'assets/images/person-on-fire.png', // Ganti dengan path gambar Anda
-                          fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+                          'assets/images/person-on-fire.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
                 
-                // Unfinished food section
-                if (unfinishedFoodScans.isNotEmpty) ...[
-                  const Text(
-                    'Makanan yang Belum Selesai',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: unfinishedFoodScans.length,
-                    itemBuilder: (context, index) {
-                      final scan = unfinishedFoodScans[index];
-                      final formattedDate = DateFormat('d MMM yyyy, HH:mm').format(scan.scanTime);
-                      
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          leading: scan.imageUrl != null 
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  scan.imageUrl!,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => 
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.fastfood),
-                                    ),
-                                ),
-                              )
-                            : Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.amber[200],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(Icons.fastfood, color: Colors.amber),
-                              ),
-                          title: Text(
-                            scan.foodName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text('Berat: ${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
-                              Text('Discan pada: $formattedDate'),
-                            ],
-                          ),
-                          trailing: ElevatedButton(
-                            child: const Text('Selesai'),
-                            onPressed: () => _showFinishFoodDialog(context, scan),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
-                
-                // Main features section
-                const Text(
-                  'Fitur Utama',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
                 const SizedBox(height: 16),
-                
-                // Welcome section
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL.isNotEmpty
-                                  ? NetworkImage(authProvider.user!.photoURL)
-                                  : null,
-                              child: authProvider.user?.photoURL == null || authProvider.user!.photoURL.isEmpty
-                                  ? const Icon(Icons.person)
-                                  : null,
+
+                // Video Educational Section
+                SizedBox(
+                  height: 190,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Container(
+                        width: 300,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(right: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Food Waste Explained',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Why food waste is such a serious problem',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
                               children: [
-                                Text(
-                                  'Selamat Datang,',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                                Text(
-                                  authProvider.user?.username ?? 'Pengguna',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.play_circle_fill),
+                                    label: const Text('Watch the Explanation'),
+                                    onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=ishA6kry8nc'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildStatCard(
-                              context,
-                              'Peringkat',
-                              '#${Provider.of<GamificationProvider>(context).getUserRank(authProvider.user?.id ?? '')}',
-                              Colors.blue,
-                            ),
-                            _buildStatCard(
-                              context,
-                              'Poin',
-                              '${authProvider.user?.points ?? 0}',
-                              Colors.green,
-                            ),
-                            _buildStatCard(
-                              context,
-                              'Scan',
-                              '${foodScanProvider.foodScans.length}',
-                              Colors.orange,
+                      ),
+                      Container(
+                        width: 300,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tips To Reduce Food Waste',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Simple ways to reduce your food waste at home',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.play_circle_fill),
+                                    label: const Text('Watch the Tips'),
+                                    onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=c7UYjSVzXoM'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 
                 const SizedBox(height: 24),
                 
-                // Calendar
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CalendarScreen()),
-                    );
-                  },
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Hari Ini',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Icon(Icons.calendar_today),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
+                // Recently logged section
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Recently logged',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Features grid
-                Text(
-                  'Fitur',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildFeatureCard(
-                      context,
-                      'Riwayat Scan',
-                      'Lihat riwayat makanan yang pernah di-scan',
-                      Icons.history,
-                      Colors.blue,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                        );
-                      },
-                    ),
-                    _buildFeatureCard(
-                      context,
-                      'Edukasi',
-                      'Pelajari cara mengurangi food waste',
-                      Icons.school,
-                      Colors.purple,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const EducationalScreen()),
-                        );
-                      },
-                    ),
-                    _buildFeatureCard(
-                      context,
-                      'Progress',
-                      'Rangkuman statistik makanan anda',
-                      Icons.show_chart,
-                      Colors.purple,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ProgressBoardingScreen()),
-                        );
-                      },
-                    ),
-                    _buildFeatureCard(
-                      context,
-                      'Scan Makanan',
-                      'Scan makanan dengan kamera',
-                      Icons.camera_alt,
-                      Colors.green,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ScanScreen()),
-                        );
-                      },
-                    ),
-                    _buildFeatureCard(
-                      context,
-                      'Leaderboard',
-                      'Lihat peringkat pengguna',
-                      Icons.leaderboard,
-                      Colors.orange,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const MainScreen()),
-                        );
-                      },
-                    ),
+                    const SizedBox(height: 12),
+                    
+                    // If no scans, show placeholder
+                    if (unfinishedFoodScans.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "You haven't uploaded any food",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "Start tracking Sunday's meals by taking a quick picture.",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    // If there are unfinished scans, show them
+                    if (unfinishedFoodScans.isNotEmpty)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: unfinishedFoodScans.length > 3 ? 3 : unfinishedFoodScans.length,
+                        itemBuilder: (context, index) {
+                          final scan = unfinishedFoodScans[index];
+                          final formattedDate = DateFormat('d MMM yyyy, HH:mm').format(scan.scanTime);
+                          
+                          return Card(
+                            elevation: 2,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: scan.imageUrl != null 
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      scan.imageUrl!,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => 
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.fastfood),
+                                        ),
+                                    ),
+                                  )
+                                : Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber[200],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.fastfood, color: Colors.amber),
+                                  ),
+                              title: Text(
+                                scan.foodName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text('Berat: ${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
+                                  Text('Discan pada: $formattedDate'),
+                                ],
+                              ),
+                              trailing: ElevatedButton(
+                                child: const Text('Selesai'),
+                                onPressed: () => _showFinishFoodDialog(context, scan),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ],
@@ -647,6 +648,338 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // Membuat widget kalender yang dapat di-scroll
+  Widget _buildScrollableDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
+    final days = ["S", "M", "T", "W", "T", "F", "S"];
+    final today = DateTime.now();
+    
+    return Column(
+      children: [
+        SizedBox(
+          height: 70,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 31, // 15 hari ke belakang + hari ini + 15 hari ke depan
+            itemBuilder: (context, index) {
+              // index 15 adalah hari ini, 0-14 adalah hari-hari sebelumnya, 16-30 adalah hari-hari berikutnya
+              final day = today.subtract(Duration(days: 15 - index));
+              final isToday = DateUtils.isSameDay(day, today);
+              final isSelected = DateUtils.isSameDay(day, _selectedDate);
+              final dayNumber = day.day.toString();
+              final weekDay = day.weekday - 1; // 0 = Senin, 6 = Minggu
+              final dayAbbr = days[weekDay >= 0 && weekDay < 7 ? weekDay : 0];
+              final hasScans = _getScansForDay(foodScanProvider, day).isNotEmpty;
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedDate = day;
+                    });
+                  },
+                  child: Column(
+                    children: [
+                      // Inisial hari (S, M, T, W, T, F, S)
+                      Text(
+                        dayAbbr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Lingkaran dengan tanggal
+                      Stack(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                              border: Border.all(
+                                color: isToday 
+                                  ? Theme.of(context).primaryColor 
+                                  : (isSelected ? Theme.of(context).primaryColor : Colors.grey),
+                                width: isToday ? 2 : 1,
+                                style: BorderStyle.solid,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                dayNumber,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected 
+                                    ? Colors.white 
+                                    : (isToday ? Theme.of(context).primaryColor : Colors.black87),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Lingkaran hijau kecil untuk tanggal dengan riwayat scan
+                          if (hasScans && !isSelected)
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // Tampilkan informasi jika ada data pada hari yang dipilih
+        if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.eco,
+                  color: Colors.green,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Anda menghemat ${_calculateCarbonSavedForDay(_getScansForSelectedDate(foodScanProvider)).toStringAsFixed(2)} kg CO₂',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(8, (index) {
+          final day = _firstDay.add(Duration(days: index));
+          final isSelected = DateUtils.isSameDay(day, _selectedDate);
+          final dayName = DateFormat('E', 'id_ID').format(day).substring(0, 1).toUpperCase();
+          final dayNumber = day.day.toString();
+          final hasScans = _getScansForDay(foodScanProvider, day).isNotEmpty;
+          
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedDate = day;
+              });
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? Theme.of(context).primaryColor : (hasScans ? Colors.grey[300] : Colors.grey[200]),
+              ),
+              child: Stack(
+                children: [
+                  if (!isSelected)
+                    CustomPaint(
+                      size: const Size(36, 36),
+                      painter: DashedCircleBorderPainter(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  Center(
+                    child: Text(
+                      dayNumber,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+  
+  List<FoodScanModel> _getScansForDay(FoodScanProvider provider, DateTime day) {
+    return provider.foodScans.where((scan) => 
+      scan.scanTime.year == day.year && 
+      scan.scanTime.month == day.month && 
+      scan.scanTime.day == day.day
+    ).toList();
+  }
+  
+  List<FoodScanModel> _getScansForSelectedDate(FoodScanProvider provider) {
+    return _getScansForDay(provider, _selectedDate);
+  }
+  
+  Widget _buildScanList(FoodScanProvider provider) {
+    final scans = _getScansForSelectedDate(provider);
+    double totalCarbonSaved = _calculateCarbonSavedForDay(scans);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.eco,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Anda menghemat ${totalCarbonSaved.toStringAsFixed(2)} kg CO₂ hari ini',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: scans.length > 3 ? 3 : scans.length,
+          itemBuilder: (context, index) {
+            final scan = scans[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.restaurant,
+                    color: Colors.amber,
+                  ),
+                ),
+                title: Text(
+                  scan.foodName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  DateFormat('HH:mm').format(scan.scanTime),
+                ),
+                trailing: Text(
+                  '${_calculateTotalWeight(scan).toStringAsFixed(0)} g',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+          },
+        ),
+        if (scans.length > 3)
+          Center(
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                );
+              },
+              child: const Text('Lihat Semua'),
+            ),
+          ),
+      ],
+    );
+  }
+  
+  double _calculateCarbonSavedForDay(List<FoodScanModel> scans) {
+    double totalWeightSaved = 0;
+    for (var scan in scans) {
+      if (scan.isDone && scan.isEaten) {
+        // Jika makanan dimakan, hitung sebagai penghematan
+        double totalWeight = _calculateTotalWeight(scan);
+        totalWeightSaved += totalWeight;
+      }
+    }
+    // Asumsi: 1 kg makanan = 2.5 kg CO2
+    return totalWeightSaved / 1000 * 2.5;
+  }
+  
+  String _calculateCarbonEmission(FoodScanProvider provider) {
+    List<FoodScanModel> allScans = provider.foodScans;
+    if (allScans.isEmpty) {
+      return "If you reduce food waste by 10%, you can reduce 0.5 kg of CO₂ every week!";
+    }
+    
+    double totalWeightSaved = 0;
+    for (var scan in allScans) {
+      if (scan.isDone && scan.isEaten) {
+        double totalWeight = _calculateTotalWeight(scan);
+        totalWeightSaved += totalWeight;
+      }
+    }
+    
+    double carbonSaved = totalWeightSaved / 1000 * 2.5;
+    
+    if (carbonSaved > 0) {
+      return "You have reduced ${carbonSaved.toStringAsFixed(1)} kg of CO₂ by reducing food waste!";
+    } else {
+      return "If you reduce food waste by 10%, you can reduce 0.5 kg of CO₂ every week!";
+    }
+  }
+
+  Future<void> _launchYoutubeVideo(String url) async {
+    final Uri uri = Uri.parse(url);
+    try {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+        webViewConfiguration: const WebViewConfiguration(
+          enableJavaScript: true,
+          enableDomStorage: true,
+        ),
+      );
+    } catch (e) {
+      // Handle kasus ketika URL tidak dapat diluncurkan
+      print('Could not launch $url: $e');
+    }
   }
 
   Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
