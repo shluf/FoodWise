@@ -21,6 +21,7 @@ import '../gamification/main_screen.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ai_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -33,6 +34,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   Color? _dominantColor;
+  DateTime _selectedDate = DateTime.now();
+  final DateTime _firstDay = DateTime.now().subtract(const Duration(days: 6));
+  final DateTime _lastDay = DateTime.now().add(const Duration(days: 1));
 
   @override
   void initState() {
@@ -294,10 +298,9 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
     
     return Scaffold(
-      backgroundColor: Colors.transparent, // Buat latar belakang transparan
-
-      appBar:null,
-      body: SafeArea( // Tambahkan SafeArea di sini
+      backgroundColor: Colors.transparent,
+      appBar: null,
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -322,8 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   
                   child: Row(
                     children: [
-                      // Text section
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,15 +332,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'Hi, ${authProvider.user?.username ?? 'User'}!',
                               style: TextStyle(
-                                fontSize: 18, // Ukuran lebih kecil
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor, // Warna teks primary
+                                color: Theme.of(context).primaryColor,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              "You haven't done anything yet, scan now to start.",
-                              style: TextStyle(
+                            Text(
+                              _calculateCarbonEmission(foodScanProvider),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey,
                               ),
@@ -348,13 +349,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Image section
                       SizedBox(
-                        width: 80, // Perbesar ukuran gambar
+                        width: 80,
                         height: 80,
                         child: Image.asset(
-                          'assets/images/person-on-fire.png', // Ganti dengan path gambar Anda
-                          fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+                          'assets/images/person-on-fire.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ],
@@ -362,6 +362,200 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 24),
                 
+                // Weekly Calendar
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Minggu ini',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                                );
+                              },
+                              child: Text(
+                                'Lihat Kalender',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDayCircles(context, foodScanProvider),
+                      const SizedBox(height: 16),
+                      if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
+                        _buildScanList(foodScanProvider),
+                      if (_getScansForSelectedDate(foodScanProvider).isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.no_food,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Tidak ada data makanan untuk ${DateFormat('d MMM', 'id_ID').format(_selectedDate)}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+
+                // Video Educational Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Food Waste Explained',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Why food waste is such a serious problem',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          // Tombol untuk YouTube video 1
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.play_circle_fill),
+                              label: const Text('Watch the Explanation'),
+                              onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=ishA6kry8nc'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Video Educational Section 2
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tips To Reduce Food Waste',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Simple ways to reduce your food waste at home',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          // Tombol untuk YouTube video 2
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.play_circle_fill),
+                              label: const Text('Watch the Tips'),
+                              onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=c7UYjSVzXoM'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+
                 // Unfinished food section
                 if (unfinishedFoodScans.isNotEmpty) ...[
                   const Text(
@@ -521,49 +715,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Calendar
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CalendarScreen()),
-                    );
-                  },
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Hari Ini',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Icon(Icons.calendar_today),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
                 // Features grid
                 Text(
                   'Fitur',
@@ -646,30 +797,206 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (authProvider.user != null) {
-                      await firestoreService.generateAndSaveWeeklySummaryWithAI(
-                        authProvider.user!.id,
-                        aiService,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Weekly summary generated successfully!')),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User not logged in.')),
-                      );
-                    }
-                  },
-                  child: const Text('Generate Weekly Summary'),
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(8, (index) {
+          final day = _firstDay.add(Duration(days: index));
+          final isSelected = DateUtils.isSameDay(day, _selectedDate);
+          final dayName = DateFormat('E', 'id_ID').format(day).substring(0, 1).toUpperCase();
+          final dayNumber = day.day.toString();
+          final hasScans = _getScansForDay(foodScanProvider, day).isNotEmpty;
+          
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedDate = day;
+              });
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? Theme.of(context).primaryColor : (hasScans ? Colors.grey[300] : Colors.grey[200]),
+                border: Border.all(
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    dayNumber,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+  
+  List<FoodScanModel> _getScansForDay(FoodScanProvider provider, DateTime day) {
+    return provider.foodScans.where((scan) => 
+      scan.scanTime.year == day.year && 
+      scan.scanTime.month == day.month && 
+      scan.scanTime.day == day.day
+    ).toList();
+  }
+  
+  List<FoodScanModel> _getScansForSelectedDate(FoodScanProvider provider) {
+    return _getScansForDay(provider, _selectedDate);
+  }
+  
+  Widget _buildScanList(FoodScanProvider provider) {
+    final scans = _getScansForSelectedDate(provider);
+    double totalCarbonSaved = _calculateCarbonSavedForDay(scans);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.eco,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Anda menghemat ${totalCarbonSaved.toStringAsFixed(2)} kg CO₂ hari ini',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: scans.length > 3 ? 3 : scans.length,
+          itemBuilder: (context, index) {
+            final scan = scans[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.restaurant,
+                    color: Colors.amber,
+                  ),
+                ),
+                title: Text(
+                  scan.foodName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  DateFormat('HH:mm').format(scan.scanTime),
+                ),
+                trailing: Text(
+                  '${_calculateTotalWeight(scan).toStringAsFixed(0)} g',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+          },
+        ),
+        if (scans.length > 3)
+          Center(
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                );
+              },
+              child: const Text('Lihat Semua'),
+            ),
+          ),
+      ],
+    );
+  }
+  
+  double _calculateCarbonSavedForDay(List<FoodScanModel> scans) {
+    double totalWeightSaved = 0;
+    for (var scan in scans) {
+      if (scan.isDone && scan.isEaten) {
+        // Jika makanan dimakan, hitung sebagai penghematan
+        double totalWeight = _calculateTotalWeight(scan);
+        totalWeightSaved += totalWeight;
+      }
+    }
+    // Asumsi: 1 kg makanan = 2.5 kg CO2
+    return totalWeightSaved / 1000 * 2.5;
+  }
+  
+  String _calculateCarbonEmission(FoodScanProvider provider) {
+    List<FoodScanModel> allScans = provider.foodScans;
+    if (allScans.isEmpty) {
+      return "If you reduce food waste by 10%, you can reduce 0.5 kg of CO₂ every week!";
+    }
+    
+    double totalWeightSaved = 0;
+    for (var scan in allScans) {
+      if (scan.isDone && scan.isEaten) {
+        double totalWeight = _calculateTotalWeight(scan);
+        totalWeightSaved += totalWeight;
+      }
+    }
+    
+    double carbonSaved = totalWeightSaved / 1000 * 2.5;
+    
+    if (carbonSaved > 0) {
+      return "You have reduced ${carbonSaved.toStringAsFixed(1)} kg of CO₂ by reducing food waste!";
+    } else {
+      return "If you reduce food waste by 10%, you can reduce 0.5 kg of CO₂ every week!";
+    }
+  }
+
+  Future<void> _launchYoutubeVideo(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Handle kasus ketika URL tidak dapat diluncurkan
+      print('Could not launch $url');
+    }
   }
 
   Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
