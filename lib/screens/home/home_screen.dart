@@ -15,7 +15,7 @@ import '../calendar/calendar_screen.dart';
 import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
 import '../gamification/quest_screen.dart';
-import '../../screens/food_waste_scan_screen.dart';
+import '../scan/food_waste_scan_screen.dart';
 import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
 import '../../services/firestore_service.dart';

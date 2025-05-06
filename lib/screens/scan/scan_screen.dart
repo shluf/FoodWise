@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,88 @@ import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../utils/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/food_scan_camera_widget.dart';
+
+class CornerPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double cornerLength;
+  final double cornerRadius;
+
+  CornerPainter({
+    required this.color,
+    this.strokeWidth = 4.0,
+    this.cornerLength = 30.0,
+    this.cornerRadius = 8.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final width = size.width;
+    final height = size.height;
+
+    // Top left corner
+    final topLeftPath = Path()
+      ..moveTo(cornerRadius, 0)
+      ..lineTo(cornerLength, 0)
+      ..moveTo(0, cornerRadius)
+      ..lineTo(0, cornerLength)
+      ..addArc(
+        Rect.fromLTWH(0, 0, cornerRadius * 2, cornerRadius * 2),
+        -pi/2,
+        pi/2,
+      );
+    canvas.drawPath(topLeftPath, paint);
+
+    // Top right corner
+    final topRightPath = Path()
+      ..moveTo(width - cornerLength, 0)
+      ..lineTo(width - cornerRadius, 0)
+      ..moveTo(width, cornerRadius)
+      ..lineTo(width, cornerLength)
+      ..addArc(
+        Rect.fromLTWH(width - cornerRadius * 2, 0, cornerRadius * 2, cornerRadius * 2),
+        0,
+        pi/2,
+      );
+    canvas.drawPath(topRightPath, paint);
+
+    // Bottom right corner
+    final bottomRightPath = Path()
+      ..moveTo(width, height - cornerLength)
+      ..lineTo(width, height - cornerRadius)
+      ..moveTo(width - cornerRadius, height)
+      ..lineTo(width - cornerLength, height)
+      ..addArc(
+        Rect.fromLTWH(width - cornerRadius * 2, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
+        pi/2,
+        pi/2,
+      );
+    canvas.drawPath(bottomRightPath, paint);
+
+    // Bottom left corner
+    final bottomLeftPath = Path()
+      ..moveTo(cornerLength, height)
+      ..lineTo(cornerRadius, height)
+      ..moveTo(0, height - cornerRadius)
+      ..lineTo(0, height - cornerLength)
+      ..addArc(
+        Rect.fromLTWH(0, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
+        pi,
+        pi/2,
+      );
+    canvas.drawPath(bottomLeftPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(CornerPainter oldDelegate) => false;
+}
 
 class ScanScreen extends StatefulWidget {
   final bool isRemainingFoodScan;
@@ -25,6 +108,8 @@ class _ScanScreenState extends State<ScanScreen> {
   File? _image;
   bool _isAnalyzing = false;
   bool _isEaten = false;
+  bool _analysisComplete = false;
+  bool _flashlightOn = false;
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _newItemNameController = TextEditingController();
   final TextEditingController _newItemWeightController = TextEditingController();
@@ -76,27 +161,37 @@ class _ScanScreenState extends State<ScanScreen> {
           });
         }
       } else {
-        print('Tidak ada kamera yang tersedia');
+        print('No cameras available');
       }
     } catch (e) {
-      print('Error inisialisasi kamera: $e');
+      print('Error initializing camera: $e');
     }
   }
 
-  Future<void> _takePicture() async {
+  void _handleImageCaptured(File imageFile) {
+    setState(() {
+      _image = imageFile;
+      _showCameraView = false;
+    });
+    
+    // Analyze the food image
+    _analyzeFoodImage();
+  }
+
+  void _toggleFlashlight() async {
     if (!_isCameraInitialized || cameraController == null) return;
     
     try {
-      final image = await cameraController!.takePicture();
-      setState(() {
-        _image = File(image.path);
-        _showCameraView = false;
-      });
+      final newValue = !_flashlightOn;
+      await cameraController!.setFlashMode(
+        newValue ? FlashMode.torch : FlashMode.off
+      );
       
-      // Analyze the food image
-      await _analyzeFoodImage();
+      setState(() {
+        _flashlightOn = newValue;
+      });
     } catch (e) {
-      print('Error mengambil gambar: $e');
+      print('Error toggling flashlight: $e');
     }
   }
 
@@ -157,6 +252,7 @@ class _ScanScreenState extends State<ScanScreen> {
           }
           
           _isAnalyzing = false;
+          _analysisComplete = true;
         });
       } else {
         // Handle analysis failure
@@ -165,11 +261,11 @@ class _ScanScreenState extends State<ScanScreen> {
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal menganalisis gambar. Silakan coba lagi.')),
+          const SnackBar(content: Text('Failed to analyze image. Please try again.')),
         );
       }
     } catch (e) {
-      print('Error menganalisis gambar: $e');
+      print('Error analyzing image: $e');
       setState(() {
         _isAnalyzing = false;
       });
@@ -194,6 +290,7 @@ class _ScanScreenState extends State<ScanScreen> {
       _showCameraView = true;
       _showAddItemForm = false;
       _showAddFoodItemForm = false;
+      _analysisComplete = false;
     });
   }
 
@@ -432,105 +529,38 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isRemainingFoodScan 
-            ? 'Pindai Sisa Makanan' 
-            : (_showCameraView ? 'Pindai Makanan' : 'Hasil Pemindaian')),
-        actions: [
-          if (!_showCameraView)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _resetScan,
-              tooltip: 'Pindai Ulang',
-            ),
-        ],
-      ),
-      body: _isAnalyzing
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Menganalisis makanan...'),
-                ],
-              ),
-            )
-          : _showCameraView
-              ? _buildCameraView()
-              : _buildResultView(),
-    );
-  }
-
-  Widget _buildCameraView() {
-    if (!_isCameraInitialized) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Menginisialisasi kamera...'),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: Stack(
-            children: [
-              // Camera preview
-              CameraPreview(cameraController!),
-              
-              // Bottom controls overlay
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.black54,
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Switch camera button
-                      IconButton(
-                        icon: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 32),
-                        onPressed: _switchCamera,
-                      ),
-                      
-                      // Capture button
-                      GestureDetector(
-                        onTap: _takePicture,
-                        child: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
-                          ),
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            margin: const EdgeInsets.all(8),
-                          ),
-                        ),
-                      ),
-                      
-                      // Placeholder to balance the layout
-                      const SizedBox(width: 50),
-                    ],
+      appBar: _showCameraView && !_isAnalyzing && !_analysisComplete 
+          ? null  // Hilangkan AppBar untuk tampilan kamera
+          : AppBar(
+              title: Text(widget.isRemainingFoodScan 
+                  ? 'Scan Leftover Food' 
+                  : (_showCameraView ? 'Scan Food' : 'Scan Result')),
+              actions: [
+                if (!_showCameraView)
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _resetScan,
+                    tooltip: 'Rescan',
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+              ],
+            ),
+      body: _isAnalyzing
+          ? const AnalyzingFoodWidget()
+          : _analysisComplete
+              ? AnalysisCompleteWidget(
+                  onDonePressed: () {
+                    setState(() {
+                      _showCameraView = false;
+                      _analysisComplete = false;
+                    });
+                  },
+                )
+              : _showCameraView
+                  ? FoodScanCameraWidget(
+                      onImageCaptured: _handleImageCaptured,
+                      showSwitchCameraButton: true,
+                    )
+                  : _buildResultView(),
     );
   }
 
@@ -551,15 +581,15 @@ class _ScanScreenState extends State<ScanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Informasi Makanan Awal',
+                      'Initial Food Information',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    Text('Makanan: ${widget.originalScan!.foodName}'),
-                    Text('Berat total: ${_calculateTotalOriginalWeight().toStringAsFixed(1)} gram'),
+                    Text('Food: ${widget.originalScan!.foodName}'),
+                    Text('Total weight: ${_calculateTotalOriginalWeight().toStringAsFixed(1)} grams'),
                     const SizedBox(height: 12),
                     const Text(
-                      'Pindai sisa makanan untuk memperkirakan berapa persen yang tersisa',
+                      'Scan leftover food to estimate the percentage remaining',
                       style: TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],
@@ -592,7 +622,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Makanan Terdeteksi: $_foodName',
+                      'Food Detected: $_foodName',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -606,7 +636,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Tingkat Keyakinan:'),
+                            Text('Confidence Level:'),
                             const SizedBox(height: 4),
                             LinearProgressIndicator(
                               value: (_scanResult!['confidence'] is num)
@@ -637,17 +667,17 @@ class _ScanScreenState extends State<ScanScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Perkiraan Sisa Makanan',
+                                'Estimated Food Remaining',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 8),
                               _buildPercentageIndicator(),
                               const SizedBox(height: 8),
                               Text(
-                                'Berat sisa: ${double.tryParse(_weightController.text)?.toStringAsFixed(1) ?? '0'} gram',
+                                'Remaining weight: ${double.tryParse(_weightController.text)?.toStringAsFixed(1) ?? '0'} grams',
                               ),
                               Text(
-                                'Persentase sisa: ${_calculatePercentageRemaining().toStringAsFixed(1)}%',
+                                'Remaining percentage: ${_calculatePercentageRemaining().toStringAsFixed(1)}%',
                               ),
                             ],
                           ),
@@ -671,27 +701,27 @@ class _ScanScreenState extends State<ScanScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Komponen Makanan',
+                        'Food Item Components',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         icon: Icon(_showAddFoodItemForm ? Icons.remove : Icons.add),
                         onPressed: _toggleAddFoodItemForm,
-                        tooltip: _showAddFoodItemForm ? 'Tutup Form' : 'Tambah Item',
+                        tooltip: _showAddFoodItemForm ? 'Close Form' : 'Add Item',
                       ),
                     ],
                   ),
                   
                   if (_showAddFoodItemForm) ...[
                     const SizedBox(height: 12),
-                    const Text('Tambahkan Komponen Makanan:'),
+                    const Text('Add Food Item:'),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _newItemNameController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Nama Item',
-                        hintText: 'contoh: Ayam Goreng',
+                        labelText: 'Item Name',
+                        hintText: 'example: Fried Chicken',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                     ),
@@ -701,8 +731,8 @@ class _ScanScreenState extends State<ScanScreen> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Berat (gram)',
-                        hintText: 'contoh: 150',
+                        labelText: 'Weight (grams)',
+                        hintText: 'example: 150',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                     ),
@@ -715,7 +745,7 @@ class _ScanScreenState extends State<ScanScreen> {
                           backgroundColor: AppColors.primaryColor,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text('Tambahkan Item'),
+                        child: const Text('Add Item'),
                       ),
                     ),
                     const Divider(height: 24),
@@ -727,7 +757,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
                         child: Text(
-                          'Tidak ada komponen makanan terdeteksi',
+                          'No food item components detected',
                           style: TextStyle(fontStyle: FontStyle.italic),
                         ),
                       ),
@@ -810,27 +840,27 @@ class _ScanScreenState extends State<ScanScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Potensi Item Foodwaste',
+                        'Potential Foodwaste Items',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         icon: Icon(_showAddItemForm ? Icons.remove : Icons.add),
                         onPressed: _toggleAddItemForm,
-                        tooltip: _showAddItemForm ? 'Tutup Form' : 'Tambah Item',
+                        tooltip: _showAddItemForm ? 'Close Form' : 'Add Item',
                       ),
                     ],
                   ),
                   
                   if (_showAddItemForm) ...[
                     const SizedBox(height: 12),
-                    const Text('Tambahkan Item Foodwaste Baru:'),
+                    const Text('Add New Foodwaste Item:'),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _newItemNameController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Nama Item',
-                        hintText: 'contoh: Tulang Ayam',
+                        labelText: 'Item Name',
+                        hintText: 'example: Chicken Bone',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                     ),
@@ -840,8 +870,8 @@ class _ScanScreenState extends State<ScanScreen> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Berat (gram)',
-                        hintText: 'contoh: 25',
+                        labelText: 'Weight (grams)',
+                        hintText: 'example: 25',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                     ),
@@ -854,7 +884,7 @@ class _ScanScreenState extends State<ScanScreen> {
                           backgroundColor: AppColors.primaryColor,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text('Tambahkan Item'),
+                        child: const Text('Add Item'),
                       ),
                     ),
                     const Divider(height: 24),
@@ -866,7 +896,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
                         child: Text(
-                          'Tidak ada item foodwaste yang terdeteksi',
+                          'No foodwaste items detected',
                           style: TextStyle(fontStyle: FontStyle.italic),
                         ),
                       ),
@@ -918,12 +948,12 @@ class _ScanScreenState extends State<ScanScreen> {
                   const SizedBox(height: 8),
                   if (_potentialFoodWasteItems.isNotEmpty)
                     const Text(
-                      'Geser item ke kiri untuk menghapus',
+                      'Swipe item to the left to delete',
                       style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
                     ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Hindari membuang sisa makanan untuk mengurangi carbon footprint.',
+                    'Avoid throwing away leftover food to reduce carbon footprint.',
                     style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
                   ),
                 ],
@@ -938,8 +968,8 @@ class _ScanScreenState extends State<ScanScreen> {
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              labelText: 'Berat Total Makanan (gram)',
-              hintText: 'Contoh: 250',
+              labelText: 'Total Food Weight (grams)',
+              hintText: 'Example: 250',
             ),
             onChanged: (value) {
               // Trigger rebuild untuk memperbarui perhitungan persentase
@@ -954,7 +984,7 @@ class _ScanScreenState extends State<ScanScreen> {
           if (widget.isRemainingFoodScan)
             SwitchListTile(
               title: Text(
-                'Makanan habis dimakan',
+                'Food eaten completely',
                 style: TextStyle(
                   color: _isEaten ? Colors.green : Colors.black,
                 ),
@@ -983,7 +1013,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 backgroundColor: AppColors.primaryColor,
               ),
               child: Text(
-                widget.isRemainingFoodScan ? 'Simpan Data Sisa Makanan' : 'Simpan Data Makanan',
+                widget.isRemainingFoodScan ? 'Save Leftover Food Data' : 'Save Food Data',
                 style: const TextStyle(fontSize: 16),
               ),
             ),
@@ -999,7 +1029,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: const Text(
-                'Ambil Ulang Foto',
+                'Retake Photo',
                 style: TextStyle(fontSize: 16),
               ),
             ),
