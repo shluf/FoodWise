@@ -75,8 +75,36 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     }
 
     if (_weeklySummary == null) {
-      return const Scaffold(
-        body: Center(child: Text('No weekly summary data available.')),
+      return Scaffold(
+        body: Center(child: Column(
+          children: [
+            const Text('No weekly summary data available.'),
+             ElevatedButton(
+                        onPressed: () async {
+                          final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
+                          if (userId != null) {
+                            try {
+                              await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Summary generated successfully!')),
+                              );
+                              // Refresh data after generating summary
+                              _fetchWeeklySummary();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error generating summary: $e')),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('User not logged in.')),
+                            );
+                          }
+                        },
+                        child: const Text('Generate Summary'),
+                      ),
+          ],
+        )),
       );
     }
 
@@ -588,7 +616,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                             );
                           }
                         },
-                        child: const Text('Generate Summary'),
+                        child: const Text('Generate New Summary'),
                       ),
                     ],
                   ),

@@ -47,7 +47,7 @@ class DashedCircleBorderPainter extends CustomPainter {
     // Menghitung jumlah dash
     final double dashLength = 3;
     final double gapLength = 3;
-    final double dashCount = (2 * math.pi * radius) / (dashLength + gapLength);
+    final double dashCount = (2 * math.pi * radius) / (dashLength + gapLength) + 1;
     
     // Membuat dash
     for (int i = 0; i < dashCount.toInt(); i++) {
@@ -338,9 +338,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final firestoreService = FirestoreService();
     final aiService = AIService(dotenv.env['GEMINI_API_KEY']!); 
     
-    final unfinishedFoodScans = foodScanProvider.foodScans
-        .where((scan) => !scan.isDone)
-        .toList();
+    // Mengambil scan makanan sesuai dengan tanggal yang dipilih
+    final selectedDateScans = _getScansForSelectedDate(foodScanProvider);
     
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -435,9 +434,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Food Waste Explained',
-                              style: TextStyle(
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                  'Food Waste Explained',
+                                  style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).primaryColor,
@@ -450,6 +455,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  width: 60,
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/confused.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                             Row(
@@ -458,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: ElevatedButton.icon(
                                     icon: const Icon(Icons.play_circle_fill),
                                     label: const Text('Watch the Explanation'),
-                                    onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=ishA6kry8nc'),
+                                    onPressed: () => _launchYoutubeVideo('https://youtu.be/wgLuXvtaLyQ?si=0sIDH6tfSXAKt17I'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.black,
                                       foregroundColor: Colors.white,
@@ -488,21 +507,42 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Tips To Reduce Food Waste',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Simple ways to reduce your food waste at home',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Food Waste Affects',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Food waste is the world\'s dumbest problem',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  width: 60,
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/confused.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                             Row(
@@ -510,8 +550,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     icon: const Icon(Icons.play_circle_fill),
-                                    label: const Text('Watch the Tips'),
-                                    onPressed: () => _launchYoutubeVideo('https://www.youtube.com/watch?v=c7UYjSVzXoM'),
+                                    label: const Text('Watch the Explanation'),
+                                    onPressed: () => _launchYoutubeVideo('https://youtu.be/1MpfEeSem_4?si=MAaRCQM2Q-zqMd4v'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.black,
                                       foregroundColor: Colors.white,
@@ -530,40 +570,61 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Recently logged section
+                // Recently logged section - Menampilkan data sesuai tanggal yang dipilih
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Recently logged',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recently Logged',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                            );
+                          },
+                          child: Text(
+                            'more',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     
-                    // If no scans, show placeholder
-                    if (unfinishedFoodScans.isEmpty)
+                    // Jika tidak ada data pada tanggal yang dipilih, tampilkan placeholder
+                    if (selectedDateScans.isEmpty)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Column(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "You haven't uploaded any food",
-                              style: TextStyle(
+                              "No food data on ${DateFormat('d MMM yyyy').format(_selectedDate)}",
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Start tracking Sunday's meals by taking a quick picture.",
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Start tracking food by taking a photo.",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
@@ -573,15 +634,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     
-                    // If there are unfinished scans, show them
-                    if (unfinishedFoodScans.isNotEmpty)
+                    // Jika ada data pada tanggal yang dipilih, tampilkan datanya
+                    if (selectedDateScans.isNotEmpty)
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: unfinishedFoodScans.length > 3 ? 3 : unfinishedFoodScans.length,
+                        itemCount: selectedDateScans.length,
                         itemBuilder: (context, index) {
-                          final scan = unfinishedFoodScans[index];
-                          final formattedDate = DateFormat('d MMM yyyy, HH:mm').format(scan.scanTime);
+                          final scan = selectedDateScans[index];
+                          final formattedDate = DateFormat('HH:mm').format(scan.scanTime);
                           
                           return Card(
                             elevation: 2,
@@ -628,14 +689,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const SizedBox(height: 4),
-                                  Text('Berat: ${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
-                                  Text('Discan pada: $formattedDate'),
+                                  Text('Weight: ${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
+                                  Text('Time: $formattedDate'),
+                                  Text(
+                                    scan.isDone 
+                                      ? (scan.isEaten ? 'Status: Eaten' : 'Status: Wasted') 
+                                      : 'Status: Not finished',
+                                    style: TextStyle(
+                                      color: scan.isDone 
+                                        ? (scan.isEaten ? Colors.green : Colors.red) 
+                                        : Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
-                              trailing: ElevatedButton(
-                                child: const Text('Selesai'),
+                              trailing: !scan.isDone ? ElevatedButton(
+                                child: const Text('Finish'),
                                 onPressed: () => _showFinishFoodDialog(context, scan),
-                              ),
+                              ) : null,
                             ),
                           );
                         },
@@ -650,7 +722,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Membuat widget kalender yang dapat di-scroll
   Widget _buildScrollableDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
     final days = ["S", "M", "T", "W", "T", "F", "S"];
     final today = DateTime.now();
@@ -661,14 +732,91 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 70,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 31, // 15 hari ke belakang + hari ini + 15 hari ke depan
+            itemCount: 17, // 15 tanggal + 2 tombol navigasi
             itemBuilder: (context, index) {
-              // index 15 adalah hari ini, 0-14 adalah hari-hari sebelumnya, 16-30 adalah hari-hari berikutnya
-              final day = today.subtract(Duration(days: 15 - index));
+              // Tombol navigasi di awal
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                      );
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CustomPaint(
+                            size: const Size(32, 32),
+                            painter: DashedCircleBorderPainter(
+                              color: Colors.grey,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              // Tombol navigasi di akhir
+              if (index == 16) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CalendarScreen()),
+                      );
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CustomPaint(
+                            size: const Size(32, 32),
+                            painter: DashedCircleBorderPainter(
+                              color: Colors.grey,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              // Item tanggal (index 1-15 dikonversi ke 0-14 untuk perhitungan tanggal)
+              final adjustedIndex = index - 1;
+              final day = today.subtract(Duration(days: 7 - adjustedIndex));
               final isToday = DateUtils.isSameDay(day, today);
               final isSelected = DateUtils.isSameDay(day, _selectedDate);
               final dayNumber = day.day.toString();
-              final weekDay = day.weekday - 1; // 0 = Senin, 6 = Minggu
+              final weekDay = day.weekday - 1;
               final dayAbbr = days[weekDay >= 0 && weekDay < 7 ? weekDay : 0];
               final hasScans = _getScansForDay(foodScanProvider, day).isNotEmpty;
               
@@ -682,46 +830,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: Column(
                     children: [
-                      // Inisial hari (S, M, T, W, T, F, S)
                       Text(
-                        dayAbbr,
+                        dayNumber,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
                       const SizedBox(height: 6),
-                      // Lingkaran dengan tanggal
                       Stack(
                         children: [
-                          Container(
+                          SizedBox(
                             width: 32,
                             height: 32,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                              border: Border.all(
-                                color: isToday 
-                                  ? Theme.of(context).primaryColor 
-                                  : (isSelected ? Theme.of(context).primaryColor : Colors.grey),
-                                width: isToday ? 2 : 1,
-                                style: BorderStyle.solid,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                dayNumber,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected 
-                                    ? Colors.white 
-                                    : (isToday ? Theme.of(context).primaryColor : Colors.black87),
+                            child: Stack(
+                              children: [
+                                if (!isSelected && !isToday)
+                                  CustomPaint(
+                                    size: const Size(32, 32),
+                                    painter: DashedCircleBorderPainter(
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                                    border: isToday || isSelected ? Border.all(
+                                      color: isToday 
+                                        ? Theme.of(context).primaryColor 
+                                        : Theme.of(context).primaryColor,
+                                      width: isToday ? 2 : 1,
+                                    ) : null,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      dayAbbr,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected 
+                                          ? Colors.white 
+                                          : (isToday ? Theme.of(context).primaryColor : Colors.black87),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                          // Lingkaran hijau kecil untuk tanggal dengan riwayat scan
                           if (hasScans && !isSelected)
                             Positioned(
                               right: 0,
@@ -742,9 +901,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
+            controller: ScrollController(
+              initialScrollOffset: 8 * 44.0, // Posisikan hari ini di tengah
+            ),
           ),
         ),
-        // Tampilkan informasi jika ada data pada hari yang dipilih
         if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
           Container(
             margin: const EdgeInsets.only(top: 8),
@@ -1118,7 +1279,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.black,
               foregroundColor: Colors.white,
             ),
             child: const Text('Scan dengan AI'),
