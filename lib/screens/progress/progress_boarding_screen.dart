@@ -27,7 +27,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   @override
   void initState() {
     super.initState();
-  _fetchWeeklySummary();
+    _listenToWeeklySummary(); 
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -39,26 +39,25 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     });
   }
 
-  Future<void> _fetchWeeklySummary() async {
+  void _listenToWeeklySummary() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
 
     if (userId != null) {
-      try {
-        final summaryData = await _firestoreService.getWeeklySummary(userId);
+      _firestoreService.getWeeklySummaryStream(userId).listen((snapshot) {
         setState(() {
-          _weeklySummary = summaryData?['weekly_summary'];
+          _weeklySummary = snapshot.data()?['weekly_summary'];
           _isLoading = false;
         });
 
-        debugPrint('Raw Weekly Summary Data:');
+        debugPrint('Real-time Weekly Summary Data:');
         debugPrint(_weeklySummary.toString());
-      } catch (e) {
-        debugPrint('Error fetching weekly summary: $e');
+      }, onError: (e) {
+        debugPrint('Error listening to weekly summary: $e');
         setState(() {
           _isLoading = false;
         });
-      }
+      });
     } else {
       setState(() {
         _isLoading = false;
@@ -79,30 +78,30 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
         body: Center(child: Column(
           children: [
             const Text('No weekly summary data available.'),
-             ElevatedButton(
-                        onPressed: () async {
-                          final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
-                          if (userId != null) {
-                            try {
-                              await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Summary generated successfully!')),
-                              );
-                              // Refresh data after generating summary
-                              _fetchWeeklySummary();
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error generating summary: $e')),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('User not logged in.')),
-                            );
-                          }
-                        },
-                        child: const Text('Generate Summary'),
-                      ),
+            //  ElevatedButton(
+            //             onPressed: () async {
+            //               final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
+            //               if (userId != null) {
+            //                 try {
+            //                   await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
+            //                   ScaffoldMessenger.of(context).showSnackBar(
+            //                     const SnackBar(content: Text('Summary generated successfully!')),
+            //                   );
+            //                   // Refresh data after generating summary
+            //                   _fetchWeeklySummary();
+            //                 } catch (e) {
+            //                   ScaffoldMessenger.of(context).showSnackBar(
+            //                     SnackBar(content: Text('Error generating summary: $e')),
+            //                   );
+            //                 }
+            //               } else {
+            //                 ScaffoldMessenger.of(context).showSnackBar(
+            //                   const SnackBar(content: Text('User not logged in.')),
+            //                 );
+            //               }
+            //             },
+            //             child: const Text('Generate Summary'),
+            //           ),
           ],
         )),
       );
@@ -115,9 +114,11 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     final foodWasteByMealTime = _weeklySummary!['foodWasteByMealTime'] as List<dynamic>;
     final totalFoodWaste = _weeklySummary!['totalFoodWaste'] as Map<String, dynamic>;
     final wasteByCategory = _weeklySummary!['wasteByCategory'] as Map<String, dynamic>;
-    final topWastedFoodItems = _weeklySummary!['topWastedFoodItems'] as List<dynamic>;
+    final topWastedFoodItems = (_weeklySummary!['topWastedFoodItems'] as List<dynamic>).take(3).toList();
     final generalUserRecommendations = _weeklySummary!['generalUserRecommendations'] as List<dynamic>;
-    final mostFinishedItems = _weeklySummary!['mostFinishedItems'] as List<dynamic>; // Added
+    final mostFinishedItems = (_weeklySummary!['mostFinishedItems'] as List<dynamic>)
+        .take(3)
+        .toList(); 
 
     // Convert foodWasteByDayOfWeek to Map for the chart
     Map<int, double> weeklyWasteMap = {};
@@ -404,41 +405,41 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                       const SizedBox(height: 24),
                       
                       // Waste by Category Section
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Waste by Category',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Inter',
-                                color: Color(0xFF070707),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ...wasteByCategory.entries.map((entry) => _buildProgressBar(
-                              entry.key, 
-                              entry.value.toDouble(), 
-                              totalWaste > 0 ? (entry.value / totalWaste) : 0,
-                              _getCategoryColor(entry.key),
-                            )),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   padding: const EdgeInsets.all(20),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.white,
+                      //     borderRadius: BorderRadius.circular(16),
+                      //     boxShadow: [
+                      //       BoxShadow(
+                      //         color: Colors.grey.withOpacity(0.1),
+                      //         blurRadius: 10,
+                      //         offset: const Offset(0, 4),
+                      //       ),
+                      //     ],
+                      //   ),
+                      //   child: Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     children: [
+                      //       const Text(
+                      //         'Waste by Category',
+                      //         style: TextStyle(
+                      //           fontSize: 18,
+                      //           fontWeight: FontWeight.w700,
+                      //           fontFamily: 'Inter',
+                      //           color: Color(0xFF070707),
+                      //         ),
+                      //       ),
+                      //       const SizedBox(height: 16),
+                      //       ...wasteByCategory.entries.map((entry) => _buildProgressBar(
+                      //         entry.key, 
+                      //         entry.value.toDouble(), 
+                      //         totalWaste > 0 ? (entry.value / totalWaste) : 0,
+                      //         _getCategoryColor(entry.key),
+                      //       )),
+                      //     ],
+                      //   ),
+                      // ),
                       
                       const SizedBox(height: 24),
                       
@@ -469,10 +470,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            ...foodWasteByMealTime.map((mealTime) => _buildMealTimeItem(
-                              mealTime['mealTime'], 
-                              '${mealTime['averageRemainingPercentage'].toStringAsFixed(1)}%'
-                            )),
+                            _buildMealTimeCharts(foodWasteByMealTime),
                           ],
                         ),
                       ),
@@ -581,12 +579,12 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildRecommendationCard(
-                              generalUserRecommendations.isNotEmpty 
-                                ? 'Frequent Waste Time: ${generalUserRecommendations[0]['eatingPattern']['frequentWasteTime']}' 
-                                : 'Recommendations',
-                              recommendations.isNotEmpty ? recommendations : ['No recommendations available'],
-                            ),
+                            // _buildRecommendationCard(
+                            //   generalUserRecommendations.isNotEmpty 
+                            //     ? 'Frequent Waste Time: ${generalUserRecommendations[0]['eatingPattern']['frequentWasteTime']}' 
+                            //     : 'Recommendations',
+                            //   recommendations.isNotEmpty ? recommendations : ['No recommendations available'],
+                            // ),
                           ],
                         ),
                       ),
@@ -594,30 +592,30 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                       const SizedBox(height: 24),
 
                       // Generate Summary Button
-                      ElevatedButton(
-                        onPressed: () async {
-                          final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
-                          if (userId != null) {
-                            try {
-                              await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Summary generated successfully!')),
-                              );
-                              // Refresh data after generating summary
-                              _fetchWeeklySummary();
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error generating summary: $e')),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('User not logged in.')),
-                            );
-                          }
-                        },
-                        child: const Text('Generate New Summary'),
-                      ),
+                      // ElevatedButton(
+                      //   onPressed: () async {
+                      //     final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
+                      //     if (userId != null) {
+                      //       try {
+                      //         await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
+                      //         ScaffoldMessenger.of(context).showSnackBar(
+                      //           const SnackBar(content: Text('Summary generated successfully!')),
+                      //         );
+                      //         // Refresh data after generating summary
+                      //         _fetchWeeklySummary();
+                      //       } catch (e) {
+                      //         ScaffoldMessenger.of(context).showSnackBar(
+                      //           SnackBar(content: Text('Error generating summary: $e')),
+                      //         );
+                      //       }
+                      //     } else {
+                      //       ScaffoldMessenger.of(context).showSnackBar(
+                      //         const SnackBar(content: Text('User not logged in.')),
+                      //       );
+                      //     }
+                      //   },
+                      //   child: const Text('Generate New Summary'),
+                      // ),
                     ],
                   ),
           ),
@@ -690,7 +688,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Inter',
-                color: Colors.grey[900],
+                color: const Color.fromARGB(255, 92, 40, 57),
               ),
             ),
           ],
@@ -722,14 +720,16 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 
   Widget _buildMealTimeItem(String mealTime, String value) {
+    final double percentage = double.tryParse(value.replaceAll('%', '')) ?? 0.0;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             mealTime,
@@ -740,13 +740,33 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
               color: Colors.grey[800],
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Inter',
-              color: Colors.grey[900],
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 150,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  PieChartSectionData(
+                    value: percentage,
+                    color: Colors.blue,
+                    title: '${percentage.toStringAsFixed(1)}%',
+                    radius: 50,
+                    titleStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    value: 100 - percentage,
+                    color: Colors.grey[300],
+                    title: '',
+                    radius: 50,
+                  ),
+                ],
+                sectionsSpace: 0,
+                centerSpaceRadius: 40,
+              ),
             ),
           ),
         ],
@@ -906,70 +926,6 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 }
 
-  // Original calculation methods - unchanged
-  double _calculateTotalWeight(FoodScanModel scan) {
-    if (scan.foodItems.isEmpty) {
-      return 0.0;
-    }
-    return scan.foodItems.fold(0.0, (sum, item) => sum + item.weight);
-  }
-
-  Map<int, double> _calculateWeeklyWaste(List<FoodScanModel> foodScans) {
-    final Map<int, double> weeklyWaste = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
-    for (var scan in foodScans) {
-      if (scan.isDone) {
-        final day = scan.scanTime.weekday - 1; // Monday = 0, Sunday = 6
-        double totalRemainingWeight = scan.foodItems.fold(0.0, (sum, item) => sum + (item.remainingWeight ?? 0.0));
-        weeklyWaste[day] = weeklyWaste[day]! + totalRemainingWeight;
-      }
-    }
-    return weeklyWaste;
-  }
-
-  Map<String, double> _calculateCategoryWaste(List<FoodScanModel> foodScans) {
-    final Map<String, double> categoryWaste = {'Karbohidrat': 0, 'Protein': 0, 'Sayuran': 0};
-    for (var scan in foodScans) {
-      for (var item in scan.foodItems) {
-        if (item.itemName.toLowerCase().contains('nasi') || item.itemName.toLowerCase().contains('rice')) {
-          categoryWaste['Karbohidrat'] = categoryWaste['Karbohidrat']! + (item.remainingWeight ?? 0.0);
-        } else if (item.itemName.toLowerCase().contains('ayam') || item.itemName.toLowerCase().contains('daging') || 
-                  item.itemName.toLowerCase().contains('chicken') || item.itemName.toLowerCase().contains('meat')) {
-          categoryWaste['Protein'] = categoryWaste['Protein']! + (item.remainingWeight ?? 0.0);
-        } else if (item.itemName.toLowerCase().contains('sayur') || item.itemName.toLowerCase().contains('vegetables')) {
-          categoryWaste['Sayuran'] = categoryWaste['Sayuran']! + (item.remainingWeight ?? 0.0);
-        }
-      }
-    }
-    return categoryWaste;
-  }
-
-  double _calculateTotalWaste(List<FoodScanModel> foodScans) {
-    double totalWaste = 0.0;
-    for (var scan in foodScans) {
-      if (scan.isDone) {
-        totalWaste += scan.foodItems.fold(0.0, (sum, item) => sum + (item.remainingWeight ?? 0.0));
-      }
-    }
-    return totalWaste;
-  }
-
-  List<Map<String, dynamic>> _getMostWastedItems(List<FoodScanModel> foodScans) {
-    final Map<String, Map<String, dynamic>> itemStats = {};
-    for (var scan in foodScans) {
-      for (var item in scan.foodItems) {
-        if (item.remainingWeight != null && item.remainingWeight! > 0) {
-          if (!itemStats.containsKey(item.itemName)) {
-            itemStats[item.itemName] = {'weight': 0.0, 'occurrences': 0};
-          }
-          itemStats[item.itemName]!['weight'] += item.remainingWeight!;
-          itemStats[item.itemName]!['occurrences'] += 1;
-        }
-      }
-    }
-    final sortedItems = itemStats.entries.toList()
-      ..sort((a, b) => b.value['weight'].compareTo(a.value['weight']));
-    return sortedItems.map((entry) => {'itemName': entry.key, ...entry.value}).toList();
-  }
 
   String _getMonthName(int month) {
     const months = [
@@ -1036,6 +992,63 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMealTimeCharts(List<dynamic> foodWasteByMealTime) {
+    final colors = [Color(0xFF000000), Color(0xFF226CE0), Color(0xFF000000)]; // Warna berbeda untuk setiap pie chart
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: foodWasteByMealTime.asMap().entries.map((entry) {
+        final index = entry.key;
+        final mealTime = entry.value['mealTime'];
+        final percentage = double.tryParse(entry.value['averageRemainingPercentage'].toString()) ?? 0.0;
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 100, // Ukuran pie chart lebih kecil
+              width: 100,
+              child: PieChart(
+                PieChartData(
+                  sections: [
+                    PieChartSectionData(
+                      value: percentage,
+                      color: colors[index % colors.length],
+                      title: '${percentage.toStringAsFixed(1)}%',
+                      radius: 40, // Radius lebih kecil
+                      titleStyle: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    PieChartSectionData(
+                      value: 100 - percentage,
+                      color: Colors.grey[300],
+                      title: '',
+                      radius: 40,
+                    ),
+                  ],
+                  sectionsSpace: 0,
+                  centerSpaceRadius: 0, // Ruang tengah lebih kecil
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              mealTime,
+              style: const TextStyle(
+                fontSize: 12, // Ukuran teks lebih kecil
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Inter',
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

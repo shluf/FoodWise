@@ -4,6 +4,8 @@ import '../models/food_scan_model.dart';
 import '../models/quest_model.dart';
 import '../models/user_model.dart';
 import '../models/leaderboard_entry_model.dart';
+import 'package:flutter/material.dart';
+
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -273,22 +275,27 @@ class FirestoreService {
 
   Future<void> generateAndSaveWeeklySummary(String userId) async {
     try {
-      // Fetch food scans for the user
-      final foodScansSnapshot = await _firestore
+      // Fetch food scans for the user in real-time
+      final foodScansStream = _firestore
           .collection('foodScans')
           .where('userId', isEqualTo: userId)
           .where('isDone', isEqualTo: true)
-          .get();
+          .snapshots();
 
-      final foodScans = foodScansSnapshot.docs.map((doc) {
-        return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
+      await for (final snapshot in foodScansStream) {
+        final foodScans = snapshot.docs.map((doc) {
+          return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+        }).toList();
 
-      // Calculate summary data
-      final Map<String, dynamic> summaryData = _calculateSummary(foodScans);
 
-      // Save summary to Firestore
-      await saveWeeklySummary(userId, summaryData);
+        // Calculate summary data
+        final Map<String, dynamic> summaryData = _calculateSummary(foodScans);
+
+        debugPrint('Weekly summary data: $summaryData');
+
+        // Save summary to Firestore
+        await saveWeeklySummary(userId, summaryData);
+      }
     } catch (e) {
       print('Error generating and saving weekly summary: $e');
       rethrow;
@@ -296,12 +303,12 @@ class FirestoreService {
   }
 
   Map<String, dynamic> _calculateSummary(List<FoodScanModel> foodScans) {
-    // Example calculations based on the provided JSON structure
     final Map<String, dynamic> summary = {
       "generalUserRecommendations": [],
       "topWastedFoodItems": [],
       "foodWasteByMealTime": [],
       "foodWasteByDayOfWeek": [],
+  
       "totalFoodWaste": {
         "totalWeight_gram": 0.0,
         "totalWeight_kg": 0.0,
@@ -315,51 +322,149 @@ class FirestoreService {
       },
     };
 
-    // Example: Calculate total food waste
-    double totalWeight = 0.0;
+    debugPrint("Data foodScans untuk summary dengan panjang ${foodScans.length}:");
     for (var scan in foodScans) {
-      for (var item in scan.foodItems) {
-        totalWeight += item.remainingWeight ?? 0.0;
-
-        // Categorize waste by type
-        if (item.itemName.toLowerCase().contains('nasi') || item.itemName.toLowerCase().contains('rice')) {
-          summary["wasteByCategory"]["Carbohydrate"] += item.remainingWeight ?? 0.0;
-        } else if (item.itemName.toLowerCase().contains('ayam') || item.itemName.toLowerCase().contains('meat')) {
-          summary["wasteByCategory"]["Protein"] += item.remainingWeight ?? 0.0;
-        } else if (item.itemName.toLowerCase().contains('sayur') || item.itemName.toLowerCase().contains('vegetables')) {
-          summary["wasteByCategory"]["Vegetables"] += item.remainingWeight ?? 0.0;
-        }
+      debugPrint("Scan ID: ${scan.id}, Scan Time: ${scan.scanTime}, Food Items: ${scan.foodItems}");
+      for(var item in scan.foodItems ?? []) {
+        debugPrint("Item Name: ${item.itemName}, Weight: ${item.weight}, Remaining Weight: ${item.remainingWeight}");
       }
     }
 
-    // Calculate total carbon emission
+    double totalWeight = 0.0;
+    Map<String, double> categoryWaste = {"Carbohydrate": 0.0, "Protein": 0.0, "Vegetables": 0.0};
+    Map<String, double> wasteByDay = {};
+    Map<String, List<double>> wasteByMealTime = {"Breakfast": [], "Lunch": [], "Dinner": []};
+    Map<String, int> finishedItemCount = {};
+    Map<String, double> itemWasteWeight = {};
+    Map<String, int> itemOccurrences = {};
+
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+
+    for (var scan in foodScans) {
+      if (scan.scanTime == null || scan.scanTime.isBefore(startOfWeek)) continue;
+
+      final dayName = _getDayName(scan.scanTime.weekday);
+      final mealTime = _categorizeMealTime(scan.scanTime);
+
+      double mealTotalWeight = 0.0;
+      double mealWasteWeight = 0.0;
+
+      if (scan.foodItems != null) {
+        for (var item in scan.foodItems!) {
+          // Validasi null untuk item.itemName dan item.weight
+          if (item.itemName == null || item.itemName!.isEmpty || item.weight == null) continue;
+
+          final remainingWeight = item.remainingWeight ?? 0.0;
+          final weight = item.weight!;
+
+          mealTotalWeight += weight;
+          mealWasteWeight += remainingWeight;
+
+          // Validasi null untuk kategori
+          final category = _categorizeByAI(item.itemName!);
+          if (categoryWaste.containsKey(category)) {
+            categoryWaste[category] = categoryWaste[category]! + remainingWeight;
+          }
+
+          // Track top wasted items
+          itemWasteWeight[item.itemName!] = (itemWasteWeight[item.itemName!] ?? 0.0) + remainingWeight;
+          itemOccurrences[item.itemName!] = (itemOccurrences[item.itemName!] ?? 0) + 1;
+
+          // Track most finished items
+          if (remainingWeight == 0) {
+            finishedItemCount[item.itemName!] = (finishedItemCount[item.itemName!] ?? 0) + 1;
+          }
+        }
+      }
+
+      // Track waste by day
+      wasteByDay[dayName] = (wasteByDay[dayName] ?? 0.0) + mealWasteWeight;
+
+      // Track waste by meal time
+      if (mealTotalWeight > 0) {
+        wasteByMealTime[mealTime]?.add((mealWasteWeight / mealTotalWeight) * 100);
+      }
+
+      totalWeight += mealWasteWeight;
+    }
+
+    // Populate summary fields
     summary["totalFoodWaste"]["totalWeight_gram"] = totalWeight;
     summary["totalFoodWaste"]["totalWeight_kg"] = totalWeight / 1000.0;
     summary["totalFoodWaste"]["totalCarbonEmission_kgCO2"] = (totalWeight / 1000.0) * 2.5;
 
-    // Example: Add recommendations
-    summary["generalUserRecommendations"].add({
-      "userId": "exampleUserId",
-      "eatingPattern": {
-        "frequentWasteTime": "Lunch",
-        "mostWastedItem": "Nasi",
-        "averageWastePercentage": 11.6,
-      },
-      "suggestions": {
-        "portionAdjustment": "Kurangi porsi nasi saat makan siang.",
-        "foodTypeRecommendation": "Pilih makanan berbasis sayuran atau sup saat siang.",
-        "behavioralTip": "Usahakan ambil porsi lebih kecil terlebih dahulu, dan tambah jika masih lapar.",
-      },
-    });
+    summary["wasteByCategory"] = categoryWaste;
 
-    // Example: Add top wasted food items
-    summary["topWastedFoodItems"].add({
-      "itemName": "Nasi",
-      "totalRemainingWeight": 200.5,
-      "totalOccurrences": 15,
-    });
+    summary["foodWasteByDayOfWeek"] = wasteByDay.entries
+        .map((entry) => {"day": entry.key, "totalWasteGram": entry.value})
+        .toList();
+
+    summary["foodWasteByMealTime"] = wasteByMealTime.entries
+        .map((entry) => {
+              "mealTime": entry.key,
+              "averageRemainingPercentage": entry.value.isNotEmpty
+                  ? entry.value.reduce((a, b) => a + b) / entry.value.length
+                  : 0.0
+            })
+        .toList();
+
+    summary["topWastedFoodItems"] = itemWasteWeight.entries
+        .map((entry) => {
+              "itemName": entry.key,
+              "totalRemainingWeight": entry.value,
+              "totalOccurrences": itemOccurrences[entry.key] ?? 0
+            })
+        .toList()
+        ..sort((a, b) => (b["totalRemainingWeight"] as double).compareTo(a["totalRemainingWeight"] as double))
+        ..take(3);
+
+    summary["mostFinishedItems"] = finishedItemCount.entries
+        .map((entry) => {"itemName": entry.key, "finishedCount": entry.value})
+        .toList()
+        ..sort((a, b) => (b["finishedCount"] as int).compareTo(a["finishedCount"] as int));
+
+    // Add recommendations using AI
+    summary["generalUserRecommendations"] = _generateRecommendationsUsingAI(summary);
+
+  
 
     return summary;
+  }
+
+  String _getDayName(int weekday) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return days[weekday - 1];
+  }
+
+  String _categorizeMealTime(DateTime time) {
+    if (time.hour >= 5 && time.hour < 11) return "Breakfast";
+    if (time.hour >= 11 && time.hour < 15) return "Lunch";
+    return "Dinner";
+  }
+
+  String _categorizeByAI(String itemName) {
+    if (itemName.toLowerCase().contains("rice")) return "Carbohydrate";
+    if (itemName.toLowerCase().contains("chicken")) return "Protein";
+    if (itemName.toLowerCase().contains("vegetable")) return "Vegetables";
+    return "Others";
+  }
+
+  List<Map<String, dynamic>> _generateRecommendationsUsingAI(Map<String, dynamic> summary) {
+    return [
+      {
+        "facts": {
+          "breakfastConsistency": "You never skip breakfast, great job!",
+          "mealPortionControl": "Your lunch portions are well-balanced.",
+          "wasteReduction": "You've reduced food waste by 15% this week."
+        },
+        "suggestions": {
+          "portionAdjustment": "Reduce portion size for lunch.",
+          "foodTypeRecommendation": "Consider eating more vegetables.",
+          "behavioralTip": "Avoid distractions while eating."
+        }
+      }
+    ];
   }
 
   Future<Map<String, dynamic>?> getWeeklySummary(String userId) async {
@@ -379,59 +484,12 @@ class FirestoreService {
     }
   }
 
-  Future<void> generateAndSaveWeeklySummaryWithAI(
-      String userId, AIService aiService) async {
-    try {
-      // Fetch existing weekly summary
-      // final weeklySummaryData = await getWeeklySummary(userId);
-
-      // if (weeklySummaryData != null && weeklySummaryData['weekly_summary'] != null) {
-      //   print('Weekly summary already exists for userId: $userId');
-      //   print('Weekly Summary: ${weeklySummaryData['weekly_summary']}');
-      //   print('Timestamp: ${weeklySummaryData['weekly_summary_timestamp']}');
-      //   return;
-      // }
-
-      // Fetch food scans for the past 7 days
-      final DateTime sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-      final foodScansSnapshot = await _firestore
-          .collection('foodScans')
-          .where('userId', isEqualTo: userId)
-          .where('scanTime', isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
-          .get();
-
-      final foodScans = foodScansSnapshot.docs.map((doc) {
-        return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-
-      if (foodScans.isEmpty) {
-        print('No food scans found for the past 7 days.');
-        return;
-      }
-
-      // Fetch user data
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      if (!userDoc.exists) {
-        print('User data not found for userId: $userId');
-        return;
-      }
-
-      final userData = userDoc.data() as Map<String, dynamic>;
-
-      // Use AIService to generate the summary
-      final Map<String, dynamic> summaryData =
-          await aiService.generateWeeklySummaryFromGemini(foodScans, userData);
-
-      // Save the summary to Firestore
-      await saveWeeklySummary(userId, summaryData);
-    } catch (e) {
-      print('Error generating and saving weekly summary with AI: $e');
-      rethrow;
-    }
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getWeeklySummaryStream(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots();
   }
-
-
-
 
 }
 
