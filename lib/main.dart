@@ -167,7 +167,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkLocalAuthStatus() async {
     try {
-      // Periksa status login dari penyimpanan lokal
       final isLoggedIn = await LocalAuthService.isLoggedIn();
       
       if (mounted) {
@@ -209,7 +208,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    // Jika masih memeriksa status login lokal, tampilkan loading
     if (_isCheckingLocalAuth) {
       return const Scaffold(
         body: Center(
@@ -225,11 +223,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         builder: (context, authProvider, _) {
           // Tampilkan loading jika AuthProvider masih inisialisasi
           if (!authProvider.isInitialized) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+            return const AnimatedLoadingScreen();
           }
           
           // Jika sudah login tapi profil belum lengkap
@@ -250,5 +244,89 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Jika belum login secara lokal, tampilkan welcome screen
     return const WelcomeScreen();
+  }
+}
+
+class AnimatedLoadingScreen extends StatefulWidget {
+  const AnimatedLoadingScreen({super.key});
+
+  @override
+  State<AnimatedLoadingScreen> createState() => _AnimatedLoadingScreenState();
+}
+
+class _AnimatedLoadingScreenState extends State<AnimatedLoadingScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _logoAnimation;
+  late Animation<double> _loadingAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _logoAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+      ),
+    );
+
+    _loadingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedBuilder(
+              animation: _logoAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, -20 * (1 - _logoAnimation.value)),
+                  child: Opacity(
+                    opacity: _logoAnimation.value,
+                    child: Image.asset(
+                      'assets/images/logo-ahshaka.png',
+                      width: 120,
+                      height: 120,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            AnimatedBuilder(
+              animation: _loadingAnimation,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _loadingAnimation.value,
+                  child: const CircularProgressIndicator(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:foodwise/screens/gamification/leaderboard_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart'; // Tambahkan import ini
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:palette_generator/palette_generator.dart';
 import '../../providers/auth_provider.dart';
@@ -20,6 +20,7 @@ import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ai_service.dart';
+import '../../widgets/food_comparison_result_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
@@ -273,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Flexible( // Tambahkan Flexible untuk mencegah overflow
-                      child: _buildNavBarItem(0, Icons.home, 'Beranda'),
+                      child: _buildNavBarItem(0, Icons.home, 'Home'),
                     ),
                     Flexible(
                       child: _buildNavBarItem(1, Icons.show_chart, 'Progress'),
@@ -346,376 +347,481 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: null,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Weekly Calendar di paling atas
-                _buildScrollableDayCircles(context, foodScanProvider),
-                
-                const SizedBox(height: 16),
-                
-                // Greeting section with background and shadow
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hi, ${authProvider.user?.username ?? 'User'}!',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "You haven't done anything, scan now to start!",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      SizedBox(
-                        width: 64,
-                        height: 64,
-                        child: Image.asset(
-                          'assets/images/person-on-fire.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
-                  ),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            children: [
+              // Weekly Calendar di paling atas
+              _buildScrollableDayCircles(context, foodScanProvider),
+              
+              const SizedBox(height: 16),
+              
+              // Greeting section with background and shadow
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 
-                const SizedBox(height: 16),
-
-                // Video Educational Section
-                SizedBox(
-                  height: 190,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      Container(
-                        width: 300,
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.only(right: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                  'Food Waste Explained',
-                                  style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Why food waste is such a serious problem',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: Image.asset(
-                                    'assets/images/confused.png',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: const Icon(Icons.play_circle_fill),
-                                    label: const Text('Watch the Explanation'),
-                                    onPressed: () => _launchYoutubeVideo('https://youtu.be/wgLuXvtaLyQ?si=0sIDH6tfSXAKt17I'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 300,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Food Waste Affects',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Food waste is the world\'s dumbest problem',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: Image.asset(
-                                    'assets/images/confused.png',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: const Icon(Icons.play_circle_fill),
-                                    label: const Text('Watch the Explanation'),
-                                    onPressed: () => _launchYoutubeVideo('https://youtu.be/1MpfEeSem_4?si=MAaRCQM2Q-zqMd4v'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Recently logged section - Menampilkan data sesuai tanggal yang dipilih
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Recently Logged',
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, ${authProvider.user?.username ?? 'User'}!',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _calculateCarbonEmission(foodScanProvider),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: Image.asset(
+                        'assets/images/person-on-fire.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+
+              // Video Educational Section
+              SizedBox(
+                height: 190,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    Container(
+                      width: 300,
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                'Food Waste Explained',
+                                style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Why food waste is such a serious problem',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: 60,
+                                height: 60,
+                                child: Image.asset(
+                                  'assets/images/confused.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.play_circle_fill),
+                                  label: const Text('Watch the Explanation'),
+                                  onPressed: () => _launchYoutubeVideo('https://youtu.be/wgLuXvtaLyQ?si=0sIDH6tfSXAKt17I'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 300,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Food Waste Affects',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Food waste is the world\'s dumbest problem',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: 60,
+                                height: 60,
+                                child: Image.asset(
+                                  'assets/images/earth_guard.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.play_circle_fill),
+                                  label: const Text('Watch the Explanation'),
+                                  onPressed: () => _launchYoutubeVideo('https://youtu.be/1MpfEeSem_4?si=MAaRCQM2Q-zqMd4v'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Recently logged section - Menampilkan data sesuai tanggal yang dipilih
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recently Logged',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                          );
+                        },
+                        child: Text(
+                          'View All',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 14,
+                            color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                            );
-                          },
-                          child: Text(
-                            'more',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Jika tidak ada data pada tanggal yang dipilih, tampilkan placeholder
+                  if (selectedDateScans.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "You haven't uploaded any food",
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Theme.of(context).primaryColor,
                               fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            "Start tracking ${DateFormat('EEEE').format(_selectedDate)}'s meals by taking a quick picture.",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    
-                    // Jika tidak ada data pada tanggal yang dipilih, tampilkan placeholder
-                    if (selectedDateScans.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "No food data on ${DateFormat('d MMM yyyy').format(_selectedDate)}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "Start tracking food by taking a photo.",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    
-                    // Jika ada data pada tanggal yang dipilih, tampilkan datanya
-                    if (selectedDateScans.isNotEmpty)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: selectedDateScans.length,
-                        itemBuilder: (context, index) {
-                          final scan = selectedDateScans[index];
-                          final formattedDate = DateFormat('HH:mm').format(scan.scanTime);
-                          
-                          return Card(
-                            elevation: 2,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
+                  
+                  // Jika ada data pada tanggal yang dipilih, tampilkan datanya
+                  if (selectedDateScans.isNotEmpty)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: selectedDateScans.length,
+                      itemBuilder: (context, index) {
+                        final scan = selectedDateScans[index];
+                        final formattedDate = DateFormat('HH:mm').format(scan.scanTime);
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            if (scan.isDone && scan.aiRemainingPercentage != null) {
+                              _showAnalysisDetails(scan);
+                            }
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              leading: scan.imageUrl != null 
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      scan.imageUrl!,
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => 
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          color: Colors.grey[300],
-                                          child: const Icon(Icons.fastfood),
-                                        ),
-                                    ),
-                                  )
-                                : Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber[200],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(Icons.fastfood, color: Colors.amber),
-                                  ),
-                              title: Text(
-                                scan.foodName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Text('Weight: ${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
-                                  Text('Time: $formattedDate'),
-                                  Text(
-                                    scan.isDone 
-                                      ? (scan.isEaten ? 'Status: Eaten' : 'Status: Wasted') 
-                                      : 'Status: Not finished',
-                                    style: TextStyle(
-                                      color: scan.isDone 
-                                        ? (scan.isEaten ? Colors.green : Colors.red) 
-                                        : Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: !scan.isDone ? ElevatedButton(
-                                child: const Text('Finish'),
-                                onPressed: () => _showFinishFoodDialog(context, scan),
-                              ) : null,
+                              ],
                             ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ],
-            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                                  child: scan.imageUrl != null 
+                                    ? Image.network(
+                                        scan.imageUrl!,
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => 
+                                          Container(
+                                            width: 150,
+                                            height: 150,
+                                            color: Colors.grey[300],
+                                            child: const Icon(Icons.fastfood),
+                                          ),
+                                    )
+                                    : Container(
+                                        width: 150,
+                                        height: 150,
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.fastfood, color: Colors.grey),
+                                      ),
+                                ),
+                                
+                                // Informasi makanan dan tombol
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Header dengan informasi dan jam
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 12, top: 12, right: 12),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                scan.foodName,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ),
+                                          
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[200],
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                formattedDate,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[800],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      // Informasi berat
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 12, top: 8, right: 12),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.local_fire_department, 
+                                              size: 16, 
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              "${_calculateTotalWeight(scan).toStringAsFixed(0)} gram",
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      // Status jika sudah selesai
+                                      if (scan.isDone)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 12, top: 4, right: 12, bottom: 12),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                scan.isEaten ? "Status: Eaten" : "Status: Wasted",
+                                                style: TextStyle(
+                                                  color: scan.isEaten ? Colors.green : Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              if (scan.aiRemainingPercentage != null) 
+                                                Text(
+                                                  "Ketuk untuk melihat detail analisis",
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 10,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      
+                                      // Tombol Selesai jika belum selesai
+                                      if (!scan.isDone)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8, top: 8, right: 8, bottom: 8),
+                                          child: SizedBox(
+                                            child: ElevatedButton(
+                                              onPressed: () => _showFinishFoodDialog(context, scan),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.black,
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                              ),
+                                              child: const Text("Finish"),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -906,34 +1012,34 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.eco,
-                  color: Colors.green,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Anda menghemat ${_calculateCarbonSavedForDay(_getScansForSelectedDate(foodScanProvider)).toStringAsFixed(2)} kg CO₂',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
+        //   Container(
+        //     margin: const EdgeInsets.only(top: 8),
+        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        //     decoration: BoxDecoration(
+        //       color: Colors.green.withOpacity(0.1),
+        //       borderRadius: BorderRadius.circular(8),
+        //     ),
+        //     child: Row(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         const Icon(
+        //           Icons.eco,
+        //           color: Colors.green,
+        //           size: 16,
+        //         ),
+        //         const SizedBox(width: 4),
+        //         Text(
+        //           'Anda menghemat ${_calculateCarbonSavedForDay(_getScansForSelectedDate(foodScanProvider)).toStringAsFixed(2)} kg CO₂',
+        //           style: const TextStyle(
+        //             color: Colors.green,
+        //             fontSize: 12,
+        //             fontWeight: FontWeight.bold,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
       ],
     );
   }
@@ -1104,13 +1210,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   String _calculateCarbonEmission(FoodScanProvider provider) {
-    List<FoodScanModel> allScans = provider.foodScans;
-    if (allScans.isEmpty) {
-      return "If you reduce food waste by 10%, you can reduce 0.5 kg of CO₂ every week!";
+    final selectedDateScans = _getScansForSelectedDate(provider);
+    if (selectedDateScans.isEmpty) {
+      return "You haven't done anything, scan now to start!";
     }
     
     double totalWeightSaved = 0;
-    for (var scan in allScans) {
+    for (var scan in selectedDateScans) {
       if (scan.isDone && scan.isEaten) {
         double totalWeight = _calculateTotalWeight(scan);
         totalWeightSaved += totalWeight;
@@ -1294,5 +1400,26 @@ class _HomeScreenState extends State<HomeScreen> {
       return 0.0;
     }
     return scan.foodItems.fold(0.0, (sum, item) => sum + item.weight);
+  }
+  
+  void _showAnalysisDetails(FoodScanModel scan) {
+    // Jika tidak ada AI Remaining Percentage, berarti tidak ada analisis AI
+    if (scan.aiRemainingPercentage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak ada hasil analisis AI untuk pemindaian ini')),
+      );
+      return;
+    }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FoodComparisonResultWidget(
+          foodScan: scan,
+          remainingPercentage: scan.aiRemainingPercentage!,
+          confidence: scan.aiConfidence ?? 0.5,
+        ),
+      ),
+    );
   }
 }
