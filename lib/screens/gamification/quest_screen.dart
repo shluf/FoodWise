@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:foodwise/widgets/common_header.dart'; // Perbaiki jalur impor
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
+import '../../services/quest_service.dart'; // Import the QuestService class
+import '../../providers/auth_provider.dart';
+import '../../models/quest_model.dart'; // Import the QuestModel class
 
 class QuestScreen extends StatefulWidget {
   const QuestScreen({super.key});
@@ -13,11 +18,23 @@ class QuestScreen extends StatefulWidget {
 
 class _QuestScreenState extends State<QuestScreen> {
   Color? _dominantColor;
+  List<Map<String, dynamic>> _rawQuests = [];
+  final QuestService questService = QuestService(); // Ensure QuestService is properly instantiated
+  final firestoreService = FirestoreService();
 
   @override
   void initState() {
     super.initState();
     _extractDominantColor();
+    _fetchUserQuests();
+
+    // Monitor progress for each quest
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    firestoreService.getUserQuestsStream(authProvider.user!.id).listen((quests) {
+      for (var quest in quests) {
+        questService.monitorQuestProgress(authProvider.user!.id, quest.id); // Ensure quest.id matches Firestore document ID
+      }
+    });
   }
 
   Future<void> _extractDominantColor() async {
@@ -37,66 +54,52 @@ class _QuestScreenState extends State<QuestScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent, // Buat latar belakang transparan
-        body: Stack(
-          children: [
-            ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                // Judul yang ikut ter-scroll
-                Text(
-                  'Challenges',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor, // Warna primary
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Daftar kartu quest
-                _buildQuestCard(
-                  context,
-                  name: 'First Bite, First Step',
-                  description: 'Welcome, Food Hero! This is your first scan.',
-                  point: 5,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Scan Master',
-                  description: 'Complete 10 scans to become a Scan Master.',
-                  point: 20,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Waste Warrior',
-                  description: 'Reduce food waste by 50% this week.',
-                  point: 50,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Eco Champion',
-                  description: 'Recycle 5 items this week.',
-                  point: 30,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Food Saver',
-                  description: 'Save 3 meals from being wasted.',
-                  point: 40,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _fetchUserQuests() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    if (authProvider.user != null) {
+      try {
+        final quests = await firestoreService.getUserQuests(authProvider.user!.id);
+        setState(() {
+          _rawQuests = quests.map((quest) => quest.toMap()).toList();
+        });
+        debugPrint('Quests fetched: $_rawQuests'); // Log fetched quests
+      } catch (e) {
+        debugPrint('Error fetching quests: $e'); // Log errors
+      }
+    } else {
+      debugPrint('User is null, cannot fetch quests'); // Log if user is null
+    }
   }
 
-  Widget _buildQuestCard(BuildContext context, {required String name, required String description, required int point}) {
+  void _claimQuest(String questTitle, int points) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    if (authProvider.user != null) {
+      try {
+        await firestoreService.claimQuest(authProvider.user!.id, questTitle);
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Quest claimed successfully!')),
+        // );
+
+        // Show the claim overlay after successful claim
+        _showClaimOverlay(context, points);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error claiming quest: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildQuestCard(BuildContext context, {required String name, required String description, required int point, required String status, required Map<String, dynamic> progress, required Map<String, dynamic> requirements}) {
+    final progressKey = requirements.keys.first; 
+    final currentProgress = progress[progressKey] ?? 0;
+    final totalRequirement = requirements[progressKey] ?? 1;
+    final progressPercentage = (currentProgress / totalRequirement).clamp(0.0, 1.0);
+
     return Card(
       elevation: 4,
       margin: const EdgeInsets.only(bottom: 16),
@@ -108,12 +111,24 @@ class _QuestScreenState extends State<QuestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              name,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '$currentProgress / $totalRequirement',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: progressPercentage >= 1.0 ? Colors.green : Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
@@ -123,6 +138,8 @@ class _QuestScreenState extends State<QuestScreen> {
                 color: Colors.grey,
               ),
             ),
+            // Progress bar
+            
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -152,19 +169,206 @@ class _QuestScreenState extends State<QuestScreen> {
                     ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    _showClaimOverlay(context, point);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
+                // Tampilkan tombol "Claim" hanya jika status adalah "completed"
+                if (status == 'completed')
+                  ElevatedButton(
+                    onPressed: () => _claimQuest(name, point),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Claim'),
                   ),
-                  child: const Text('Claim'),
-                ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClaimedQuestCard(BuildContext context, {required String name, required String description, required int point}) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.grey.shade200, Colors.grey.shade300],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Colors.amber,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.monetization_on,
+                    color: Colors.green,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '+$point',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Buat latar belakang transparan
+        body: StreamBuilder<List<QuestModel>>(
+          stream: firestoreService.getUserQuestsStream(authProvider.user!.id),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
+            final quests = snapshot.data ?? [];
+            final ongoingQuests = quests.where((quest) => quest.status != 'claimed').toList();
+            final claimedQuests = quests.where((quest) => quest.status == 'claimed').toList();
+
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                // Section untuk ongoing/completed quests
+                Text(
+                  'Challenges',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor, // Warna primary
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (ongoingQuests.isNotEmpty)
+                  ...ongoingQuests.map((quest) {
+                    return _buildQuestCard(
+                      context,
+                      name: quest.title,
+                      description: quest.description,
+                      point: quest.points,
+                      status: quest.status,
+                      progress: quest.progress,
+                      requirements: quest.requirements,
+                    );
+                  }).toList()
+                else
+                  Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Center(
+                        child: Text(
+                          'No ongoing challenges.',
+                          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 32),
+
+                // Section untuk claimed quests
+                if (claimedQuests.isNotEmpty) ...[
+                  Text(
+                    'Claimed Challenges',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor, // Warna primary
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...claimedQuests.map((quest) {
+                    return _buildClaimedQuestCard(
+                      context,
+                      name: quest.title,
+                      description: quest.description,
+                      point: quest.points,
+                    );
+                  }).toList(),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
+import '../../providers/auth_provider.dart'; // Import the AuthProvider class
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -8,95 +11,81 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  final String _currentUserId = '19'; // Dummy user ID untuk pengguna yang sedang login
+  
+  late final String _currentUserId;
   final ScrollController _scrollController = ScrollController();
 
-  List<LeaderboardUser> _leaderboard = [
-    LeaderboardUser(id: '1', username: 'Alice', points: 250),
-    LeaderboardUser(id: '2', username: 'Bob', points: 300),
-    LeaderboardUser(id: '3', username: 'Charlie', points: 150),
-    LeaderboardUser(id: '4', username: 'Diana', points: 400),
-    LeaderboardUser(id: '5', username: 'Eve', points: 100),
-    LeaderboardUser(id: '6', username: 'Frank', points: 350),
-    LeaderboardUser(id: '7', username: 'Grace', points: 200),
-    LeaderboardUser(id: '8', username: 'Hank', points: 50),
-    LeaderboardUser(id: '9', username: 'Ivy', points: 180),
-    LeaderboardUser(id: '10', username: 'LoggedUser', points: 220), // Dummy data untuk pengguna yang sedang login
-    LeaderboardUser(id: '11', username: 'Jack', points: 90),
-    LeaderboardUser(id: '12', username: 'Karen', points: 310),
-    LeaderboardUser(id: '13', username: 'Leo', points: 400),
-    LeaderboardUser(id: '14', username: 'Mia', points: 275),
-    LeaderboardUser(id: '15', username: 'Nina', points: 125),
-    LeaderboardUser(id: '16', username: 'Oscar', points: 50),
-    LeaderboardUser(id: '17', username: 'Paul', points: 320),
-    LeaderboardUser(id: '18', username: 'Quinn', points: 180),
-    LeaderboardUser(id: '19', username: 'Rachel', points: 140),
-    LeaderboardUser(id: '20', username: 'Steve', points: 400),
-    LeaderboardUser(id: '21', username: 'Tina', points: 90),
-    LeaderboardUser(id: '22', username: 'Uma', points: 60),
-    LeaderboardUser(id: '23', username: 'Victor', points: 200),
-    LeaderboardUser(id: '24', username: 'Wendy', points: 300),
-    LeaderboardUser(id: '25', username: 'Xander', points: 250),
-    LeaderboardUser(id: '26', username: 'Yara', points: 150),
-    LeaderboardUser(id: '27', username: 'Zane', points: 100),
-  ];
-
-  Future<void> _refreshLeaderboard() async {
-    // Simulasi refresh leaderboard
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      // Update leaderboard data (contoh: shuffle data untuk simulasi perubahan)
-      _leaderboard.shuffle();
-      _leaderboard.sort((a, b) => b.points.compareTo(a.points));
-      for (int i = 0; i < _leaderboard.length; i++) {
-        _leaderboard[i].rank = i + 1;
-      }
-    });
+  void initState() {
+    super.initState();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _currentUserId = authProvider.user?.id ?? ''; // Get the logged-in user's ID
+    if (_currentUserId.isEmpty) {
+      debugPrint('No user is logged in.'); // Debug log if no user is logged in
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Sort leaderboard by points in descending order
-    _leaderboard.sort((a, b) => b.points.compareTo(a.points));
-
-    // Assign ranks based on sorted order
-    for (int i = 0; i < _leaderboard.length; i++) {
-      _leaderboard[i].rank = i + 1; // Rank starts from 1
-    }
+    final firestoreService = FirestoreService();
 
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: RefreshIndicator(
-          onRefresh: _refreshLeaderboard,
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              Text(
-                'Leaderboard',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+        body: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: firestoreService.getLeaderboardStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              debugPrint('Error in StreamBuilder: ${snapshot.error}');
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _buildLeaderboardTable(),
-            ],
-          ),
+              );
+            }
+
+            final leaderboardData = snapshot.data ?? [];
+            leaderboardData.sort((a, b) => (b['points'] as int).compareTo(a['points'] as int));
+
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                Text(
+                  'Leaderboard',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildLeaderboardTable(leaderboardData),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildLeaderboardTable() {
-    final currentUser = _leaderboard.firstWhere((user) => user.id == _currentUserId);
-    final currentUserIndex = _leaderboard.indexWhere((user) => user.id == _currentUserId);
+  Widget _buildLeaderboardTable(List<Map<String, dynamic>> leaderboardData) {
+    final currentUserIndex = leaderboardData.indexWhere((user) => user['id'] == _currentUserId);
+    final currentUser = currentUserIndex != -1
+        ? LeaderboardUser(
+            id: leaderboardData[currentUserIndex]['id'],
+            username: leaderboardData[currentUserIndex]['username'] ?? 'Unknown',
+            points: leaderboardData[currentUserIndex]['points'] ?? 0,
+            rank: currentUserIndex + 1,
+          )
+        : null;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        // border: Border.all(color: Theme.of(context).primaryColor, width: 2),
       ),
       child: Column(
         children: [
@@ -150,15 +139,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: ListView.builder(
               controller: _scrollController,
               shrinkWrap: true,
-              itemCount: _leaderboard.length,
+              itemCount: leaderboardData.length,
               itemBuilder: (context, index) {
-                final user = _leaderboard[index];
-                return _buildLeaderboardRow(user);
+                final user = leaderboardData[index];
+                return _buildLeaderboardRow(
+                  rank: index + 1,
+                  username: user['username'] ?? 'Unknown',
+                  points: user['points'] ?? 0,
+                  isCurrentUser: user['id'] == _currentUserId,
+                );
               },
             ),
           ),
-          // Current user row at the bottom if rank is outside visible range
-          if (currentUserIndex >= 10) // Tampilkan hanya jika peringkat pengguna di luar 10 besar
+          
             GestureDetector(
               onTap: () {
                 if (currentUserIndex != -1) {
@@ -169,7 +162,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   );
                 }
               },
-              child: _buildCurrentUserRowWithHint(currentUser),
+              child: currentUser != null
+                  ? _buildCurrentUserRowWithHint(currentUser)
+                  : const SizedBox.shrink(),
             ),
         ],
       ),
@@ -177,36 +172,37 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildCurrentUserRowWithHint(LeaderboardUser user) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              '${user.rank}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-              ),
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+    decoration: BoxDecoration(
+      color: Theme.of(context).primaryColor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.5)),
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 40,
+          child: Text(
+            '${user.rank}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
             ),
           ),
-          Expanded(
-            child: Text(
-              user.username,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-              ),
+        ),
+        Expanded(
+          child: Text(
+            user.username,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
             ),
           ),
-          Row(
-            
+        ),
+        SizedBox(
+          width: 120, // Berikan lebar yang cukup untuk teks dan ikon
+          child: Row(
             children: [
               Icon(
                 Icons.touch_app,
@@ -223,18 +219,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _buildLeaderboardRow(LeaderboardUser user) {
-    final isCurrentUser = user.id == _currentUserId;
-
+  Widget _buildLeaderboardRow({
+    required int rank,
+    required String username,
+    required int points,
+    required bool isCurrentUser,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       decoration: BoxDecoration(
-        color: isCurrentUser ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.white,
+        color: Colors.white, // Highlight current user
         borderRadius: BorderRadius.circular(6),
         border: Border(
           bottom: BorderSide(color: Colors.grey.shade200),
@@ -245,7 +245,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           SizedBox(
             width: 40,
             child: Text(
-              '${user.rank}',
+              '$rank',
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                 color: isCurrentUser ? Theme.of(context).primaryColor : Colors.black,
@@ -254,7 +254,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
           Expanded(
             child: Text(
-              user.username,
+              username,
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                 color: isCurrentUser ? Theme.of(context).primaryColor : Colors.black,
@@ -273,7 +273,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${user.points}',
+                  '$points',
                   textAlign: TextAlign.right,
                   style: TextStyle(
                     fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
@@ -293,12 +293,12 @@ class LeaderboardUser {
   final String id;
   final String username;
   final int points;
-  int rank;
+  final int rank;
 
   LeaderboardUser({
     required this.id,
     required this.username,
     required this.points,
-    this.rank = 0, // Default rank is 0, will be assigned later
+    required this.rank,
   });
 }

@@ -20,10 +20,10 @@ class GamificationProvider extends ChangeNotifier {
   void loadQuests() {
     _setLoading(true);
     
-    _firestoreService.getAllQuests().listen((quests) {
+    _firestoreService.getAllQuests().then((quests) {
       _quests = quests;
       _setLoading(false);
-    }, onError: (e) {
+    }).catchError((e) {
       _error = 'Gagal memuat data quest: $e';
       _setLoading(false);
     });

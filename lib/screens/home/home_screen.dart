@@ -23,6 +23,7 @@ import '../../widgets/food_comparison_result_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Menambahkan CustomPainter untuk garis putus-putus
 class DashedCircleBorderPainter extends CustomPainter {
@@ -209,13 +210,41 @@ class _HomeScreenState extends State<HomeScreen> {
                               size: 28,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              '120', // Contoh jumlah poin
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                            StreamBuilder<int>(
+                              stream: FirestoreService().getUserPointsStream(
+                                Provider.of<AuthProvider>(context, listen: false).user?.id ?? '',
                               ),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Text(
+                                    '...',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                }
+                                if (snapshot.hasError || !snapshot.hasData) {
+                                  return const Text(
+                                    '0',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                }
+                                final points = snapshot.data!;
+                                return Text(
+                                  '$points',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -724,6 +753,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontSize: 16,
                                                   color: Colors.black,
                                                 ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           
