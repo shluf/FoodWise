@@ -75,35 +75,15 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
 
     if (_weeklySummary == null) {
       return Scaffold(
-        body: Center(child: Column(
-          children: [
-            const Text('No weekly summary data available.'),
-            //  ElevatedButton(
-            //             onPressed: () async {
-            //               final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
-            //               if (userId != null) {
-            //                 try {
-            //                   await _firestoreService.generateAndSaveWeeklySummaryWithAI(userId, _aiService);
-            //                   ScaffoldMessenger.of(context).showSnackBar(
-            //                     const SnackBar(content: Text('Summary generated successfully!')),
-            //                   );
-            //                   // Refresh data after generating summary
-            //                   _fetchWeeklySummary();
-            //                 } catch (e) {
-            //                   ScaffoldMessenger.of(context).showSnackBar(
-            //                     SnackBar(content: Text('Error generating summary: $e')),
-            //                   );
-            //                 }
-            //               } else {
-            //                 ScaffoldMessenger.of(context).showSnackBar(
-            //                   const SnackBar(content: Text('User not logged in.')),
-            //                 );
-            //               }
-            //             },
-            //             child: const Text('Generate Summary'),
-            //           ),
-          ],
-        )),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, 
+            crossAxisAlignment: CrossAxisAlignment.center, 
+            children: [
+              const Text('No weekly summary data available.'),
+            ],
+          ),
+        ),
       );
     }
 
@@ -346,6 +326,8 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                       const SizedBox(height: 24),
                       
                       // Food Waste Summary Section
+                      
+                      // Carbon Emmisionsion Converter
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -363,7 +345,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Food Waste Summary',
+                              'Carbon Emissions Converter',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -372,74 +354,99 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
+                            if (totalFoodWaste['totalWeight_gram'] == 0)
+                              const Center(
+                                child: Text(
+                                  'Belum ada makanan yang terbuang.',
+                                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                              )
+                            else
+                              Column(
                                 children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width * 0.45,
-                                    child: _buildSummaryCard(
-                                      'Total Food Waste', 
-                                      '${totalFoodWaste['totalWeight_gram'].toStringAsFixed(2)} g',
-                                      Icons.delete_outline,
-                                      Color(0xFFE57373), // Light red
-                                    ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: Image.asset(
+                                            'assets/images/fw_gram.png',
+                                            fit: BoxFit.contain, 
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Total food waste: ${totalFoodWaste['totalWeight_gram'].toStringAsFixed(2)} gram',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                            fontFamily: 'Inter',
+                                            color: Color(0xFF070707),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 16),
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width * 0.45,
-                                    child: _buildSummaryCard(
-                                      'Carbon Emissions', 
-                                      '${totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3)} kg',
-                                      Icons.cloud_outlined,
-                                      Color(0xFF81C784), // Light green
-                                    ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: Image.asset(
+                                            'assets/images/fw_emissions.png',
+                                            fit: BoxFit.contain, 
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Total carbon emissions from food waste: ${totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3)} kg',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                            fontFamily: 'Inter',
+                                            color: Color(0xFF070707),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(height: 16),
+                                  const Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          "Let's aim to reduce that",
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            fontStyle: FontStyle.italic, 
+                                            fontFamily: 'Inter',
+                                            color: Color(0xFF070707),
+                                          ),
+                                        ),
+                                    ],
+                                  )
                                 ],
                               ),
-                            ),
                           ],
                         ),
                       ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Waste by Category Section
-                      // Container(
-                      //   padding: const EdgeInsets.all(20),
-                      //   decoration: BoxDecoration(
-                      //     color: Colors.white,
-                      //     borderRadius: BorderRadius.circular(16),
-                      //     boxShadow: [
-                      //       BoxShadow(
-                      //         color: Colors.grey.withOpacity(0.1),
-                      //         blurRadius: 10,
-                      //         offset: const Offset(0, 4),
-                      //       ),
-                      //     ],
-                      //   ),
-                      //   child: Column(
-                      //     crossAxisAlignment: CrossAxisAlignment.start,
-                      //     children: [
-                      //       const Text(
-                      //         'Waste by Category',
-                      //         style: TextStyle(
-                      //           fontSize: 18,
-                      //           fontWeight: FontWeight.w700,
-                      //           fontFamily: 'Inter',
-                      //           color: Color(0xFF070707),
-                      //         ),
-                      //       ),
-                      //       const SizedBox(height: 16),
-                      //       ...wasteByCategory.entries.map((entry) => _buildProgressBar(
-                      //         entry.key, 
-                      //         entry.value.toDouble(), 
-                      //         totalWaste > 0 ? (entry.value / totalWaste) : 0,
-                      //         _getCategoryColor(entry.key),
-                      //       )),
-                      //     ],
-                      //   ),
-                      // ),
                       
                       const SizedBox(height: 24),
                       
@@ -470,7 +477,15 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildMealTimeCharts(foodWasteByMealTime),
+                            if (foodWasteByMealTime.isEmpty)
+                              const Center(
+                                child: Text(
+                                  'Belum ada data waktu makan.',
+                                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                              )
+                            else
+                              _buildMealTimeCharts(foodWasteByMealTime),
                           ],
                         ),
                       ),
@@ -504,11 +519,19 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            ...topWastedFoodItems.take(3).map((item) => _buildWastedItemCard(
-                              item['itemName'], 
-                              '${item['totalRemainingWeight'].toStringAsFixed(1)} g', 
-                              '${item['totalOccurrences']} times'
-                            )),
+                            if (topWastedFoodItems.isEmpty)
+                              const Center(
+                                child: Text(
+                                  'Belum ada makanan yang terbuang.',
+                                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                              )
+                            else
+                              ...topWastedFoodItems.take(3).map((item) => _buildWastedItemCard(
+                                item['itemName'], 
+                                '${item['totalRemainingWeight'].toStringAsFixed(1)} g', 
+                                '${item['totalOccurrences']} times',
+                              )),
                           ],
                         ),
                       ),
@@ -542,10 +565,18 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          ...mostFinishedItems.map((item) => _buildFinishedItemCard(
-                                item['itemName'],
-                                '${item['finishedCount']} times',
-                              )),
+                          if (mostFinishedItems.isEmpty)
+                            const Center(
+                              child: Text(
+                                'Belum ada makanan yang dihabiskan.',
+                                style: TextStyle(fontSize: 14, color: Colors.grey),
+                              ),
+                            )
+                          else
+                            ...mostFinishedItems.map((item) => _buildFinishedItemCard(
+                                  item['itemName'],
+                                  '${item['finishedCount']} times',
+                                )),
                         ],
                       ),
                     ),
@@ -553,41 +584,49 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                     const SizedBox(height: 24),
                       
                       // Recommendations Section
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Recommendations',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Inter',
-                                color: Color(0xFF070707),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            // _buildRecommendationCard(
-                            //   generalUserRecommendations.isNotEmpty 
-                            //     ? 'Frequent Waste Time: ${generalUserRecommendations[0]['eatingPattern']['frequentWasteTime']}' 
-                            //     : 'Recommendations',
-                            //   recommendations.isNotEmpty ? recommendations : ['No recommendations available'],
-                            // ),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   padding: const EdgeInsets.all(20),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.white,
+                      //     borderRadius: BorderRadius.circular(16),
+                      //     boxShadow: [
+                      //       BoxShadow(
+                      //         color: Colors.grey.withOpacity(0.1),
+                      //         blurRadius: 10,
+                      //         offset: const Offset(0, 4),
+                      //       ),
+                      //     ],
+                      //   ),
+                      //   child: Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     children: [
+                      //       const Text(
+                      //         'Recommendations',
+                      //         style: TextStyle(
+                      //           fontSize: 18,
+                      //           fontWeight: FontWeight.w700,
+                      //           fontFamily: 'Inter',
+                      //           color: Color(0xFF070707),
+                      //         ),
+                      //       ),
+                      //       const SizedBox(height: 16),
+                      //       if (recommendations.isEmpty)
+                      //         const Center(
+                      //           child: Text(
+                      //             'Belum ada rekomendasi.',
+                      //             style: TextStyle(fontSize: 14, color: Colors.grey),
+                      //           ),
+                      //         )
+                      //       else
+                      //         _buildRecommendationCard(
+                      //           generalUserRecommendations.isNotEmpty 
+                      //             ? 'Frequent Waste Time: ${generalUserRecommendations[0]['eatingPattern']['frequentWasteTime']}' 
+                      //             : 'Recommendations',
+                      //           recommendations,
+                      //         ),
+                      //     ],
+                      //   ),
+                      // ),
                       
                       const SizedBox(height: 24),
 
@@ -996,7 +1035,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 
   Widget _buildMealTimeCharts(List<dynamic> foodWasteByMealTime) {
-    final colors = [Color(0xFF000000), Color(0xFF226CE0), Color(0xFF000000)]; // Warna berbeda untuk setiap pie chart
+    final colors = [Color(0xFF000000), Color(0xFF000000), Color(0xFF000000)];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1010,29 +1049,32 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
             SizedBox(
               height: 100, // Ukuran pie chart lebih kecil
               width: 100,
-              child: PieChart(
-                PieChartData(
-                  sections: [
-                    PieChartSectionData(
-                      value: percentage,
-                      color: colors[index % colors.length],
-                      title: '${percentage.toStringAsFixed(1)}%',
-                      radius: 40, // Radius lebih kecil
-                      titleStyle: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+              child: Container(
+                 // Ensure the background is transparent
+                child: PieChart(
+                  PieChartData(
+                    sections: [
+                      PieChartSectionData(
+                        value: percentage,
+                        color: colors[index % colors.length],
+                        title: '${percentage.toStringAsFixed(1)}%',
+                        radius: 40, // Radius lebih kecil
+                        titleStyle: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    PieChartSectionData(
-                      value: 100 - percentage,
-                      color: Colors.grey[300],
-                      title: '',
-                      radius: 40,
-                    ),
-                  ],
-                  sectionsSpace: 0,
-                  centerSpaceRadius: 0, // Ruang tengah lebih kecil
+                      PieChartSectionData(
+                        color: Color(0xFF226CE0),
+                        value: 100 - percentage,
+                        title: '',
+                        radius: 40,
+                      ),
+                    ],
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 0, // Ruang tengah lebih kecil
+                  ),
                 ),
               ),
             ),
