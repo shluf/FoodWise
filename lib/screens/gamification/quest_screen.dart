@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:foodwise/widgets/common_header.dart'; // Perbaiki jalur impor
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
+import '../../providers/auth_provider.dart';
+import '../../models/quest_model.dart'; // Import the QuestModel class
 
 class QuestScreen extends StatefulWidget {
   const QuestScreen({super.key});
@@ -13,11 +17,13 @@ class QuestScreen extends StatefulWidget {
 
 class _QuestScreenState extends State<QuestScreen> {
   Color? _dominantColor;
+  List<Map<String, dynamic>> _rawQuests = [];
 
   @override
   void initState() {
     super.initState();
     _extractDominantColor();
+    _fetchUserQuests();
   }
 
   Future<void> _extractDominantColor() async {
@@ -37,14 +43,52 @@ class _QuestScreenState extends State<QuestScreen> {
     );
   }
 
+  Future<void> _fetchUserQuests() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    if (authProvider.user != null) {
+      try {
+        final quests = await firestoreService.getUserQuests(authProvider.user!.id);
+        setState(() {
+          _rawQuests = quests.map((quest) => quest.toMap()).toList();
+        });
+        debugPrint('Quests fetched: $_rawQuests'); // Log fetched quests
+      } catch (e) {
+        debugPrint('Error fetching quests: $e'); // Log errors
+      }
+    } else {
+      debugPrint('User is null, cannot fetch quests'); // Log if user is null
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.transparent, // Buat latar belakang transparan
-        body: Stack(
-          children: [
-            ListView(
+        body: StreamBuilder<List<QuestModel>>(
+          stream: firestoreService.getUserQuestsStream(authProvider.user!.id),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
+            final quests = snapshot.data ?? [];
+
+            return ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
                 // Judul yang ikut ter-scroll
@@ -57,40 +101,18 @@ class _QuestScreenState extends State<QuestScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Daftar kartu quest
-                _buildQuestCard(
-                  context,
-                  name: 'First Bite, First Step',
-                  description: 'Welcome, Food Hero! This is your first scan.',
-                  point: 5,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Scan Master',
-                  description: 'Complete 10 scans to become a Scan Master.',
-                  point: 20,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Waste Warrior',
-                  description: 'Reduce food waste by 50% this week.',
-                  point: 50,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Eco Champion',
-                  description: 'Recycle 5 items this week.',
-                  point: 30,
-                ),
-                _buildQuestCard(
-                  context,
-                  name: 'Food Saver',
-                  description: 'Save 3 meals from being wasted.',
-                  point: 40,
-                ),
+                // Daftar kartu quest berdasarkan data dari Firestore
+                ...quests.map((quest) {
+                  return _buildQuestCard(
+                    context,
+                    name: quest.title,
+                    description: quest.description,
+                    point: quest.points,
+                  );
+                }).toList(),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

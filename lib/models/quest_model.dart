@@ -1,34 +1,27 @@
 class QuestModel {
-  final String id;
-  final String name;
+  final String title;
   final String description;
-  final int point;
-  final String? imageUrl;
-  
+  final int points;
+
   QuestModel({
-    required this.id,
-    required this.name,
+    required this.title,
     required this.description,
-    required this.point,
-    this.imageUrl,
+    required this.points,
   });
-  
-  factory QuestModel.fromMap(Map<String, dynamic> map, String id) {
+
+  factory QuestModel.fromMap(Map<String, dynamic> map, String? id) {
     return QuestModel(
-      id: id,
-      name: map['name'] ?? '',
-      description: map['description'] ?? '',
-      point: map['point'] ?? 0,
-      imageUrl: map['imageUrl'],
+      title: map['title'] ?? 'Untitled Quest', // Default value for title
+      description: map['description'] ?? 'No description available.', // Default value for description
+      points: (map['points'] is int) ? map['points'] : int.tryParse(map['points'].toString()) ?? 0, // Handle int or string
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'title': title,
       'description': description,
-      'point': point,
-      'imageUrl': imageUrl,
+      'points': points,
     };
   }
-} 
+}

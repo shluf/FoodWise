@@ -104,20 +104,7 @@ class FirestoreService {
           return null;
         });
   }
-  
-  // Quests Collection
-  // ================
-  
-  Stream<List<QuestModel>> getAllQuests() {
-    return _firestore
-        .collection('quests')
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return QuestModel.fromMap(doc.data(), doc.id);
-          }).toList();
-        });
-  }
+
   
   // Users Collection 
   // ===============
@@ -135,16 +122,6 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateUserPoints(String userId, int points) async {
-    try {
-      await _firestore.collection('users').doc(userId).update({
-        'points': FieldValue.increment(points)
-      });
-    } catch (e) {
-      print('Error updating user points: $e');
-      rethrow;
-    }
-  }
   
   Stream<List<UserModel>> getLeaderboard() {
     return _firestore
@@ -246,7 +223,7 @@ class FirestoreService {
   // Gamifikasi Collection
   // =====================
   
-  Future<List<QuestModel>> getAllQuestsData() async {
+  Future<List<QuestModel>> getAllQuests() async {
     try {
       final snapshot = await _firestore.collection('quests').get();
       return snapshot.docs.map((doc) {
@@ -257,6 +234,56 @@ class FirestoreService {
       return [];
     }
   }
+
+  Future<List<QuestModel>> getUserQuests(String userId) async {
+  try {
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (userDoc.exists && userDoc.data() != null) {
+      final questsData = userDoc.data()!['quest'] as List<dynamic>? ?? [];
+      return questsData.map((quest) {
+        return QuestModel.fromMap(quest as Map<String, dynamic>, '');
+      }).toList();
+    }
+    return [];
+  } catch (e) {
+    print('Error fetching user quests: $e');
+    return [];
+  }
+}
+
+Stream<List<QuestModel>> getUserQuestsStream(String userId) {
+  return _firestore.collection('users').doc(userId).snapshots().map((snapshot) {
+    if (snapshot.exists && snapshot.data() != null) {
+      final questsData = snapshot.data()!['quest'] as List<dynamic>? ?? [];
+      return questsData.map((quest) {
+        return QuestModel.fromMap(quest as Map<String, dynamic>, null);
+      }).toList();
+    }
+    return [];
+  });
+}
+
+Future<void> updateUserPoints(String userId, int points) async {
+try {
+  await _firestore.collection('users').doc(userId).update({
+    'points': FieldValue.increment(points)
+  });
+} catch (e) {
+  print('Error updating user points: $e');
+  rethrow;
+}
+}
+
+Stream<int> getUserPointsStream(String userId) {
+  return _firestore.collection('users').doc(userId).snapshots().map((snapshot) {
+    if (snapshot.exists && snapshot.data() != null) {
+      return snapshot.data()!['points'] ?? 0;
+    }
+    return 0;
+  });
+}
+
+  
 
   // Weekly Summary Collection
   // =====================
@@ -490,6 +517,8 @@ class FirestoreService {
         .doc(userId)
         .snapshots();
   }
+
+  
 
 }
 
