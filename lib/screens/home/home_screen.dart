@@ -126,9 +126,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 4) {
+      // Buka profile screen sebagai layar terpisah
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
@@ -138,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
       const ProgressBoardingScreen(),
       Container(), // Placeholder untuk tombol scan
       const MainScreen(),
-      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -1146,6 +1153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(Icons.question_mark_rounded, size: 40, color: Colors.black),
               const Text(
                 'Is it Finished?',
                 style: TextStyle(
@@ -1229,8 +1237,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      icon: const Icon(Icons.auto_awesome, size: 20),
-                      label: const Text('Fix Result'),
+                      icon: const Icon(Icons.auto_awesome, size: 20, color: Colors.white),
+                      label: const Text('Scan Rest'),
                     ),
                   ),
                 ],
