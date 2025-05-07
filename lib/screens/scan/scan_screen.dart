@@ -9,6 +9,7 @@ import '../../utils/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/food_scan_camera_widget.dart';
 import '../../services/firestore_service.dart'; // Ensure this is the correct path to FirestoreService
+import 'package:google_fonts/google_fonts.dart';
 
 class CornerPainter extends CustomPainter {
   final Color color;
@@ -476,13 +477,13 @@ class _ScanScreenState extends State<ScanScreen> {
         final success = await provider.updateFoodScan(updatedScan, imageFile: _image);
         
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Pemindaian sisa makanan berhasil! ${remainingPercentage.toStringAsFixed(1)}% makanan tersisa'
-              ),
-            ),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(
+          //       'Pemindaian sisa makanan berhasil! ${remainingPercentage.toStringAsFixed(1)}% makanan tersisa'
+          //     ),
+          //   ),
+          // );
           
           Navigator.pop(context); // Kembali ke halaman sebelumnya
         } else {
@@ -511,9 +512,85 @@ class _ScanScreenState extends State<ScanScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Pemindaian makanan berhasil disimpan!')),
           );
-          
-          // Reset the scan view
-          _resetScan();
+
+          // Add 5 points to the user
+          if (authProvider.user != null) {
+            final firestoreService = FirestoreService();
+            await firestoreService.updateUserPoints(authProvider.user!.id, 5);
+          }
+
+          // Show popup message for earned points
+          if (mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.all(24.0), 
+                  content: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8, 
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Congratulations!',
+                          style: TextStyle(
+                            fontSize: 28, 
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "You've earned 5 points",
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        const Icon(
+                          Icons.monetization_on,
+                          color: Colors.amber, 
+                          size: 64, 
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor, 
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(fontSize: 16), 
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ).then((_) {
+              _resetScan();
+              Navigator.pop(context);
+            });
+          } else {
+            // Jika tidak ada dialog, reset scan dan kembali ke halaman sebelumnya
+            _resetScan();
+            Navigator.pop(context);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Gagal menyimpan data: ${provider.error}')),
