@@ -1,24 +1,48 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CameraOverlayWidget extends StatelessWidget {
   final String? previousImagePath;
+  final String? previousImageUrl;
   final double opacity;
 
   const CameraOverlayWidget({
     Key? key,
-    required this.previousImagePath,
+    this.previousImagePath,
+    this.previousImageUrl,
     this.opacity = 0.5,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (previousImagePath == null || previousImagePath!.isEmpty) {
+    // Jika tidak ada path maupun URL, tidak tampilkan apa-apa
+    if ((previousImagePath == null || previousImagePath!.isEmpty) && 
+        (previousImageUrl == null || previousImageUrl!.isEmpty)) {
       return Container();
     }
 
+    // Prioritaskan URL jika tersedia
+    if (previousImageUrl != null && previousImageUrl!.isNotEmpty) {
+      return Positioned.fill(
+        child: Opacity(
+          opacity: opacity,
+          child: CachedNetworkImage(
+            imageUrl: previousImageUrl!,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            errorWidget: (context, url, error) => const Center(
+              child: Icon(Icons.error, color: Colors.red, size: 40),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Gunakan gambar lokal jika URL tidak tersedia
     return Positioned.fill(
       child: Opacity(
         opacity: opacity,
@@ -31,18 +55,16 @@ class CameraOverlayWidget extends StatelessWidget {
   }
 }
 
-// Widget untuk membuat sudut kotak scan dengan sudut rounded
+// Widget untuk membuat sudut kotak scan
 class CornerPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
   final double cornerLength;
-  final double cornerRadius;
 
   CornerPainter({
     required this.color,
     this.strokeWidth = 4.0,
     this.cornerLength = 30.0,
-    this.cornerRadius = 8.0,
   });
 
   @override
@@ -57,56 +79,52 @@ class CornerPainter extends CustomPainter {
     final height = size.height;
 
     // Top left corner
-    final topLeftPath = Path()
-      ..moveTo(cornerRadius, 0)
-      ..lineTo(cornerLength, 0)
-      ..moveTo(0, cornerRadius)
-      ..lineTo(0, cornerLength)
-      ..addArc(
-        Rect.fromLTWH(0, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
-        pi,
-        pi/2,
-      );
-    canvas.drawPath(topLeftPath, paint);
+    canvas.drawLine(
+      Offset(0, cornerLength),
+      const Offset(0, 0),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, 0),
+      Offset(cornerLength, 0),
+      paint,
+    );
 
     // Top right corner
-    final topRightPath = Path()
-      ..moveTo(width - cornerLength, 0)
-      ..lineTo(width - cornerRadius, 0)
-      ..moveTo(width, cornerRadius)
-      ..lineTo(width, cornerLength)
-      ..addArc(
-        Rect.fromLTWH(0, 0, cornerRadius * 2, cornerRadius * 2),
-        -pi/2,
-        pi/2,
-      );
-    canvas.drawPath(topRightPath, paint);
+    canvas.drawLine(
+      Offset(width - cornerLength, 0),
+      Offset(width, 0),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(width, 0),
+      Offset(width, cornerLength),
+      paint,
+    );
 
     // Bottom right corner
-    final bottomRightPath = Path()
-      ..moveTo(width, height - cornerLength)
-      ..lineTo(width, height - cornerRadius)
-      ..moveTo(width - cornerRadius, height)
-      ..lineTo(width - cornerLength, height)
-      ..addArc(
-        Rect.fromLTWH(width - cornerRadius * 2, 0, cornerRadius * 2, cornerRadius * 2),
-        0,
-        pi/2,
-      );
-    canvas.drawPath(bottomRightPath, paint);
+    canvas.drawLine(
+      Offset(width, height - cornerLength),
+      Offset(width, height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(width, height),
+      Offset(width - cornerLength, height),
+      paint,
+    );
 
     // Bottom left corner
-    final bottomLeftPath = Path()
-      ..moveTo(cornerLength, height)
-      ..lineTo(cornerRadius, height)
-      ..moveTo(0, height - cornerRadius)
-      ..lineTo(0, height - cornerLength)
-      ..addArc(
-        Rect.fromLTWH(width - cornerRadius * 2, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
-        pi/2,
-        pi/2,
-      );
-    canvas.drawPath(bottomLeftPath, paint);
+    canvas.drawLine(
+      Offset(cornerLength, height),
+      Offset(0, height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, height),
+      Offset(0, height - cornerLength),
+      paint,
+    );
   }
 
   @override
@@ -115,11 +133,13 @@ class CornerPainter extends CustomPainter {
 
 class CameraWithOverlayScreen extends StatefulWidget {
   final String? previousImagePath;
+  final String? previousImageUrl;
   final Function(File) onImageCaptured;
 
   const CameraWithOverlayScreen({
     Key? key,
-    required this.previousImagePath,
+    this.previousImagePath,
+    this.previousImageUrl,
     required this.onImageCaptured,
   }) : super(key: key);
 
@@ -135,6 +155,7 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
   bool _isCapturing = false;
+  int _selectedCameraIndex = 0;
   
   @override
   void initState() {
@@ -173,13 +194,13 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
         return;
       }
       
-      final backCamera = _cameras!.firstWhere(
+      _cameras!.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
         orElse: () => _cameras!.first
       );
       
       _cameraController = CameraController(
-        backCamera,
+        _cameras![_selectedCameraIndex],
         ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
@@ -195,6 +216,21 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
     } catch (e) {
       print('Error initializing camera: $e');
     }
+  }
+
+  void _switchCamera() async {
+    if (_cameras == null || _cameras!.isEmpty || _cameras!.length <= 1) return;
+    
+    setState(() {
+      _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras!.length;
+      _isCameraInitialized = false;
+    });
+    
+    // Dispose current controller
+    await _cameraController?.dispose();
+    
+    // Reinitialize with new camera
+    _initializeCamera();
   }
 
   void _toggleFlashlight() async {
@@ -287,9 +323,10 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
                 ),
           
           // Previous image overlay
-          if (_showOverlay && widget.previousImagePath != null)
+          if (_showOverlay)
             CameraOverlayWidget(
               previousImagePath: widget.previousImagePath,
+              previousImageUrl: widget.previousImageUrl,
               opacity: _overlayOpacity,
             ),
             
@@ -303,7 +340,6 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
                   color: Colors.white,
                   strokeWidth: 3.0,
                   cornerLength: 30.0,
-                  cornerRadius: 8.0,
                 ),
               ),
             ),
@@ -321,25 +357,25 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      margin: const EdgeInsets.all(8.0),
+                      margin: const EdgeInsets.all(4.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.black),
                         onPressed: () => Navigator.of(context).pop(),
+                        padding: const EdgeInsets.all(8.0),
                       ),
                     ),
-                    if (_showOverlay && widget.previousImagePath != null)
+                    if (widget.previousImagePath != null || widget.previousImageUrl != null)
                       IconButton(
                         icon: Icon(
                           _showOverlay ? Icons.visibility : Icons.visibility_off,
@@ -362,7 +398,7 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
           ),
           
           // Overlay transparency controls
-          if (_showOverlay && widget.previousImagePath != null)
+          if (_showOverlay && (widget.previousImagePath != null || widget.previousImageUrl != null))
             Positioned(
               bottom: 150,
               left: 20,
@@ -427,6 +463,18 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Switch camera button
+                  CircleAvatar(
+                    backgroundColor: Colors.white54,
+                    radius: 25,
+                    child: IconButton(
+                      icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
+                      onPressed: _switchCamera,
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 40),
+                  
                   // Capture button
                   GestureDetector(
                     onTap: _isCapturing ? null : _captureImage,

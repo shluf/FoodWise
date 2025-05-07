@@ -61,7 +61,7 @@ class FoodScanModel {
   final List<FoodItem> foodItems;
   final List<PotentialFoodWasteItem>? potentialFoodWasteItems; // item makanan yang berpotensi jadi foodwaste
   final DateTime scanTime;
-  final DateTime finishTime;
+  final DateTime? finishTime;
   final bool isDone;
   final bool isEaten; // makanan habis atau sisa
   final String? imageUrl;
@@ -75,7 +75,7 @@ class FoodScanModel {
     required this.foodName, 
     required this.foodItems,
     required this.scanTime,
-    required this.finishTime,
+    this.finishTime,
     required this.isDone,
     this.isEaten = false,
     this.potentialFoodWasteItems,
@@ -108,7 +108,7 @@ class FoodScanModel {
       scanTime: (map['scanTime'] as Timestamp).toDate(),
       finishTime: map['finishTime'] != null 
           ? (map['finishTime'] as Timestamp).toDate() 
-          : DateTime.now().add(const Duration(days: 7)),
+          : null,
       isDone: map['isDone'] ?? false,
       isEaten: map['isEaten'] ?? false,
       foodItems: foodItems,
@@ -152,13 +152,13 @@ class FoodScanModel {
       throw Exception('Invalid scanTime format for document ID: $id');
     }
 
-    DateTime finishTime;
+    DateTime? finishTime;
     if (map['finishTime'] is Timestamp) {
       finishTime = (map['finishTime'] as Timestamp).toDate();
     } else if (map['finishTime'] is String) {
       finishTime = DateTime.parse(map['finishTime']);
     } else {
-      finishTime = DateTime.now().add(const Duration(days: 7));
+      finishTime = null;
     }
 
     return FoodScanModel(

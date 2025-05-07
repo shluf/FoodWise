@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
@@ -7,19 +6,16 @@ import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../utils/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/food_scan_camera_widget.dart';
 
 class CornerPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
   final double cornerLength;
-  final double cornerRadius;
 
   CornerPainter({
     required this.color,
     this.strokeWidth = 4.0,
     this.cornerLength = 30.0,
-    this.cornerRadius = 8.0,
   });
 
   @override
@@ -34,56 +30,52 @@ class CornerPainter extends CustomPainter {
     final height = size.height;
 
     // Top left corner
-    final topLeftPath = Path()
-      ..moveTo(cornerRadius, 0)
-      ..lineTo(cornerLength, 0)
-      ..moveTo(0, cornerRadius)
-      ..lineTo(0, cornerLength)
-      ..addArc(
-        Rect.fromLTWH(0, 0, cornerRadius * 2, cornerRadius * 2),
-        -pi/2,
-        pi/2,
-      );
-    canvas.drawPath(topLeftPath, paint);
+    canvas.drawLine(
+      Offset(0, cornerLength),
+      const Offset(0, 0),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, 0),
+      Offset(cornerLength, 0),
+      paint,
+    );
 
     // Top right corner
-    final topRightPath = Path()
-      ..moveTo(width - cornerLength, 0)
-      ..lineTo(width - cornerRadius, 0)
-      ..moveTo(width, cornerRadius)
-      ..lineTo(width, cornerLength)
-      ..addArc(
-        Rect.fromLTWH(width - cornerRadius * 2, 0, cornerRadius * 2, cornerRadius * 2),
-        0,
-        pi/2,
-      );
-    canvas.drawPath(topRightPath, paint);
+    canvas.drawLine(
+      Offset(width - cornerLength, 0),
+      Offset(width, 0),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(width, 0),
+      Offset(width, cornerLength),
+      paint,
+    );
 
     // Bottom right corner
-    final bottomRightPath = Path()
-      ..moveTo(width, height - cornerLength)
-      ..lineTo(width, height - cornerRadius)
-      ..moveTo(width - cornerRadius, height)
-      ..lineTo(width - cornerLength, height)
-      ..addArc(
-        Rect.fromLTWH(width - cornerRadius * 2, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
-        pi/2,
-        pi/2,
-      );
-    canvas.drawPath(bottomRightPath, paint);
+    canvas.drawLine(
+      Offset(width, height - cornerLength),
+      Offset(width, height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(width, height),
+      Offset(width - cornerLength, height),
+      paint,
+    );
 
     // Bottom left corner
-    final bottomLeftPath = Path()
-      ..moveTo(cornerLength, height)
-      ..lineTo(cornerRadius, height)
-      ..moveTo(0, height - cornerRadius)
-      ..lineTo(0, height - cornerLength)
-      ..addArc(
-        Rect.fromLTWH(0, height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2),
-        pi,
-        pi/2,
-      );
-    canvas.drawPath(bottomLeftPath, paint);
+    canvas.drawLine(
+      Offset(cornerLength, height),
+      Offset(0, height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, height),
+      Offset(0, height - cornerLength),
+      paint,
+    );
   }
 
   @override
@@ -108,8 +100,7 @@ class _ScanScreenState extends State<ScanScreen> {
   File? _image;
   bool _isAnalyzing = false;
   bool _isEaten = false;
-  bool _analysisComplete = false;
-  bool _flashlightOn = false;
+  bool _isSaving = false;
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _newItemNameController = TextEditingController();
   final TextEditingController _newItemWeightController = TextEditingController();
@@ -120,6 +111,8 @@ class _ScanScreenState extends State<ScanScreen> {
   List<PotentialFoodWasteItem> _potentialFoodWasteItems = [];
   bool _showAddItemForm = false;
   bool _showAddFoodItemForm = false;
+  bool _analysisComplete = false;
+  bool _flashlightOn = false;
 
   // Kamera variables
   List<CameraDescription>? cameras;
@@ -161,37 +154,27 @@ class _ScanScreenState extends State<ScanScreen> {
           });
         }
       } else {
-        print('No cameras available');
+        print('Tidak ada kamera yang tersedia');
       }
     } catch (e) {
-      print('Error initializing camera: $e');
+      print('Error inisialisasi kamera: $e');
     }
   }
 
-  void _handleImageCaptured(File imageFile) {
-    setState(() {
-      _image = imageFile;
-      _showCameraView = false;
-    });
-    
-    // Analyze the food image
-    _analyzeFoodImage();
-  }
-
-  void _toggleFlashlight() async {
+  Future<void> _takePicture() async {
     if (!_isCameraInitialized || cameraController == null) return;
     
     try {
-      final newValue = !_flashlightOn;
-      await cameraController!.setFlashMode(
-        newValue ? FlashMode.torch : FlashMode.off
-      );
-      
+      final image = await cameraController!.takePicture();
       setState(() {
-        _flashlightOn = newValue;
+        _image = File(image.path);
+        _showCameraView = false;
       });
+      
+      // Analyze the food image
+      await _analyzeFoodImage();
     } catch (e) {
-      print('Error toggling flashlight: $e');
+      print('Error mengambil gambar: $e');
     }
   }
 
@@ -261,11 +244,11 @@ class _ScanScreenState extends State<ScanScreen> {
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to analyze image. Please try again.')),
+          const SnackBar(content: Text('Gagal menganalisis gambar. Silakan coba lagi.')),
         );
       }
     } catch (e) {
-      print('Error analyzing image: $e');
+      print('Error menganalisis gambar: $e');
       setState(() {
         _isAnalyzing = false;
       });
@@ -408,7 +391,7 @@ class _ScanScreenState extends State<ScanScreen> {
   void _saveFoodScan() async {
     if (_foodName == null || _scanResult == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data makanan tidak lengkap.')),
+        const SnackBar(content: Text('Food data is incomplete.')),
       );
       return;
     }
@@ -420,10 +403,15 @@ class _ScanScreenState extends State<ScanScreen> {
 
     if (weight == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Masukkan berat makanan yang valid.')),
+        const SnackBar(content: Text('Enter a valid food weight.')),
       );
       return;
     }
+
+    // Set saving state to true
+    setState(() {
+      _isSaving = true;
+    });
 
     try {
       final provider = Provider.of<FoodScanProvider>(context, listen: false);
@@ -431,21 +419,25 @@ class _ScanScreenState extends State<ScanScreen> {
       
       if (authProvider.user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Anda perlu login untuk menyimpan data makanan.')),
+          const SnackBar(content: Text('You need to login to save food data.')),
         );
+        // Reset saving state
+        setState(() {
+          _isSaving = false;
+        });
         return;
       }
 
       if (widget.isRemainingFoodScan && widget.originalScan != null) {
-        // Proses untuk sisa makanan
+        // Process for leftover food
         final totalRemainingWeight = weight;
         final originalWeight = _calculateTotalOriginalWeight();
         final remainingPercentage = (totalRemainingWeight / originalWeight) * 100;
         
-        // Perbarui remaining weight untuk setiap food item
+        // Update remaining weight for each food item
         for (int i = 0; i < _foodItems.length; i++) {
           final item = _foodItems[i];
-          // Hitung sisa berdasarkan persentase (bisa dioptimasi lebih lanjut)
+          // Calculate remaining based on percentage
           final remainingWeight = item.weight * (totalRemainingWeight / originalWeight);
           _foodItems[i] = FoodItem(
             itemName: item.itemName,
@@ -454,65 +446,81 @@ class _ScanScreenState extends State<ScanScreen> {
           );
         }
         
-        // Update makanan yang sudah ada
+        // Update existing food
         final updatedScan = widget.originalScan!.copyWith(
           isDone: true,
           isEaten: _isEaten,
           foodItems: _foodItems,
           aiRemainingPercentage: remainingPercentage,
           afterImageUrl: null,
+          finishTime: DateTime.now(),
         );
         
         final success = await provider.updateFoodScan(updatedScan, imageFile: _image);
+        
+        // Reset saving state
+        setState(() {
+          _isSaving = false;
+        });
         
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Pemindaian sisa makanan berhasil! ${remainingPercentage.toStringAsFixed(1)}% makanan tersisa'
+                'Leftover food scan successful! ${remainingPercentage.toStringAsFixed(1)}% of food remaining'
               ),
             ),
           );
           
-          Navigator.pop(context); // Kembali ke halaman sebelumnya
+          Navigator.pop(context); // Return to previous page
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal menyimpan data sisa: ${provider.error}')),
+            SnackBar(content: Text('Failed to save leftover data: ${provider.error}')),
           );
         }
       } else {
-        // Proses untuk makanan baru
+        // Process for new food
         final foodScan = FoodScanModel(
-          id: '', // Akan diberikan oleh Firestore
+          id: '', // Will be provided by Firestore
           userId: authProvider.user!.id,
-          foodName: _foodName ?? 'Makanan tidak teridentifikasi',
+          foodName: _foodName ?? 'Unidentified Food',
           scanTime: DateTime.now(),
-          finishTime: DateTime.now().add(const Duration(days: 7)),
+          finishTime: null,
           isDone: false,
           isEaten: false,
           foodItems: _foodItems,
           potentialFoodWasteItems: _potentialFoodWasteItems.isNotEmpty ? _potentialFoodWasteItems : null,
-          imageUrl: null, // URL gambar akan diatur setelah upload ke Firebase Storage
+          imageUrl: null, // Image URL will be set after upload to Firebase Storage
         );
 
         final success = await provider.addFoodScan(foodScan, imageFile: _image);
 
+        // Reset saving state
+        setState(() {
+          _isSaving = false;
+        });
+        
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pemindaian makanan berhasil disimpan!')),
+            const SnackBar(content: Text('Food scan saved successfully!')),
           );
           
           // Reset the scan view
           _resetScan();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal menyimpan data: ${provider.error}')),
+            SnackBar(content: Text('Failed to save data: ${provider.error}')),
           );
         }
       }
     } catch (e) {
+      // Reset saving state
+      setState(() {
+        _isSaving = false;
+      });
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error menyimpan data: $e')),
+        SnackBar(content: Text('Error saving data: $e')),
       );
     }
   }
@@ -526,517 +534,1104 @@ class _ScanScreenState extends State<ScanScreen> {
     return double.tryParse(_weightController.text) ?? 0.0;
   }
 
+  void _toggleFlashlight() async {
+    if (!_isCameraInitialized || cameraController == null) return;
+    
+    try {
+      final newValue = !_flashlightOn;
+      await cameraController!.setFlashMode(
+        newValue ? FlashMode.torch : FlashMode.off
+      );
+      
+      setState(() {
+        _flashlightOn = newValue;
+      });
+    } catch (e) {
+      print('Error toggling flashlight: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _showCameraView && !_isAnalyzing && !_analysisComplete 
-          ? null  // Hilangkan AppBar untuk tampilan kamera
-          : AppBar(
-              title: Text(widget.isRemainingFoodScan 
-                  ? 'Scan Leftover Food' 
-                  : (_showCameraView ? 'Scan Food' : 'Scan Result')),
-              actions: [
-                if (!_showCameraView)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _resetScan,
-                    tooltip: 'Rescan',
-                  ),
-              ],
-            ),
       body: _isAnalyzing
-          ? const AnalyzingFoodWidget()
-          : _analysisComplete
-              ? AnalysisCompleteWidget(
-                  onDonePressed: () {
-                    setState(() {
-                      _showCameraView = false;
-                      _analysisComplete = false;
-                    });
-                  },
-                )
-              : _showCameraView
-                  ? FoodScanCameraWidget(
-                      onImageCaptured: _handleImageCaptured,
-                      showSwitchCameraButton: true,
-                    )
-                  : _buildResultView(),
-    );
-  }
-
-  Widget _buildResultView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Info tentang scan sisa makanan
-          if (widget.isRemainingFoodScan && widget.originalScan != null)
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+          ? Container(
+              color: Colors.white,
+              child: const Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Initial Food Information',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Icon(
+                      Icons.camera_alt,
+                      size: 80,
+                      color: Colors.black,
                     ),
-                    const SizedBox(height: 8),
-                    Text('Food: ${widget.originalScan!.foodName}'),
-                    Text('Total weight: ${_calculateTotalOriginalWeight().toStringAsFixed(1)} grams'),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Scan leftover food to estimate the percentage remaining',
-                      style: TextStyle(fontStyle: FontStyle.italic),
+                    SizedBox(height: 20),
+                    Text(
+                      'AI still analyzing your food',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
+            )
+          : _analysisComplete
+              ? _buildAnalysisCompleteView()
+              : _showCameraView
+                  ? _buildCameraView()
+                  : _buildResultView(),
+    );
+  }
 
-          // Menampilkan preview gambar
-          if (_image != null)
+  Widget _buildAnalysisCompleteView() {
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Great!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Your food has been analyzed',
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 24),
             Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: FileImage(_image!),
-                  fit: BoxFit.cover,
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 50,
+              ),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: 200,
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _showCameraView = false;
+                    _analysisComplete = false;
+                  });
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
-          const SizedBox(height: 16),
-          
-          // Menampilkan hasil analisis
-          if (_foodName != null)
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCameraView() {
+    if (!_isCameraInitialized) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.camera_alt,
+              size: 60,
+              color: Colors.black,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Initializing camera...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 24),
+            CircularProgressIndicator(),
+          ],
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        // Camera preview
+        SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: CameraPreview(cameraController!),
+        ),
+        
+        // Scan frame corners
+        Center(
+          child: SizedBox(
+            width: 250,
+            height: 250,
+            child: CustomPaint(
+              painter: CornerPainter(
+                color: Colors.white,
+                strokeWidth: 3.0,
+                cornerLength: 30.0,
+              ),
+            ),
+          ),
+        ),
+        
+        // Header dengan tombol kembali
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(4.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+        // Bottom controls overlay
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 120,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Switch camera button
+                CircleAvatar(
+                  backgroundColor: Colors.white54,
+                  radius: 25,
+                  child: IconButton(
+                    icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
+                    onPressed: _switchCamera,
+                  ),
+                ),
+                
+                const SizedBox(width: 40),
+                
+                // Capture button
+                GestureDetector(
+                  onTap: _takePicture,
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Flashlight button
+                const SizedBox(width: 40),
+                CircleAvatar(
+                  backgroundColor: Colors.white.withOpacity(0.7),
+                  radius: 25,
+                  child: IconButton(
+                    icon: Icon(
+                      _flashlightOn ? Icons.flash_on : Icons.flash_off,
+                      color: _flashlightOn ? Colors.amber : Colors.black,
+                      size: 24,
+                    ),
+                    onPressed: _toggleFlashlight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultView() {
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            // App Bar that stays visible when scrolling
+            SliverAppBar(
+              expandedHeight: _image != null ? 250 : 100,
+              floating: false,
+              pinned: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 8, top: 8),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 6,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                background: _image != null
+                  ? Container(
+                      width: double.infinity,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: FileImage(_image!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    )
+                  : Container(color: Colors.grey[200]),
+              ),
+            ),
+            
+            // Content
+            SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Food Detected: $_foodName',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Carbon Footprint: ${_carbonFootprint?.toStringAsFixed(2)} kg CO₂e',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    if (_scanResult?['confidence'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
+                    // Info about leftover food scan
+                    if (widget.isRemainingFoodScan && widget.originalScan != null)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Confidence Level:'),
-                            const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: (_scanResult!['confidence'] is num)
-                                ? (_scanResult!['confidence'] as num).toDouble()
-                                : 0.0,
-                              backgroundColor: Colors.grey[300],
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                (_scanResult!['confidence'] is num && (_scanResult!['confidence'] as num).toDouble() > 0.7)
-                                  ? Colors.green
-                                  : Colors.orange,
-                              ),
+                            const Text(
+                              'Initial Food Information',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Food: ${widget.originalScan!.foodName}'),
+                            Text('Total weight: ${_calculateTotalOriginalWeight().toStringAsFixed(1)} grams'),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Scan leftover food to estimate the percentage remaining',
+                              style: TextStyle(fontStyle: FontStyle.italic),
                             ),
                           ],
                         ),
                       ),
                     
-                    // Tampilkan persentase sisa makanan jika ini adalah scan untuk sisa makanan
-                    if (widget.isRemainingFoodScan && widget.originalScan != null && double.tryParse(_weightController.text) != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
+                    // Show analysis results
+                    if (_foodName != null) ...[
+                      // Time and Food Name
+                      Text(
+                        _formatTime(DateTime.now()),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                      ),
+                      
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _foodName!,
+                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+
+                                // Duration Badge
+                                if (widget.originalScan != null)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.timer, size: 15, color: Colors.black54),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _formatDuration(widget.originalScan!.finishTime?.difference(widget.originalScan!.scanTime) ?? Duration.zero),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: const Row(
+                              children: [
+                                Text('1 ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Icon(Icons.colorize, size: 16),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Food Weight
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Colors.black),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Carbon Footprint',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${_carbonFootprint?.toStringAsFixed(2)} kg CO₂e',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Confidence Level Information
+                      if (_scanResult?['confidence'] != null)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'AI Confidence Level',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (_scanResult!['confidence'] is num)
+                                    Text(
+                                      '${((_scanResult!['confidence'] as num).toDouble() * 100).toStringAsFixed(0)}%',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: (_scanResult!['confidence'] is num)
+                                    ? (_scanResult!['confidence'] as num).toDouble()
+                                    : 0.0,
+                                  minHeight: 8,
+                                  backgroundColor: Colors.grey[300],
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    (_scanResult!['confidence'] is num && (_scanResult!['confidence'] as num).toDouble() > 0.7)
+                                      ? Colors.green
+                                      : Colors.orange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      // Show percentage of leftover food if this is a leftover food scan
+                      if (widget.isRemainingFoodScan && widget.originalScan != null && double.tryParse(_weightController.text) != null)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Estimated Food Remaining',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                'Leftover Food Analysis',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              _buildPercentageIndicator(),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Remaining weight: ${double.tryParse(_weightController.text)?.toStringAsFixed(1) ?? '0'} grams',
-                              ),
-                              Text(
-                                'Remaining percentage: ${_calculatePercentageRemaining().toStringAsFixed(1)}%',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // Tampilkan daftar item makanan
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Food Item Components',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon: Icon(_showAddFoodItemForm ? Icons.remove : Icons.add),
-                        onPressed: _toggleAddFoodItemForm,
-                        tooltip: _showAddFoodItemForm ? 'Close Form' : 'Add Item',
-                      ),
-                    ],
-                  ),
-                  
-                  if (_showAddFoodItemForm) ...[
-                    const SizedBox(height: 12),
-                    const Text('Add Food Item:'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _newItemNameController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Item Name',
-                        hintText: 'example: Fried Chicken',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _newItemWeightController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Weight (grams)',
-                        hintText: 'example: 150',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _addNewFoodItem,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Add Item'),
-                      ),
-                    ),
-                    const Divider(height: 24),
-                  ],
-                  
-                  const SizedBox(height: 8),
-                  if (_foodItems.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Text(
-                          'No food item components detected',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _foodItems.length,
-                      itemBuilder: (context, index) {
-                        final item = _foodItems[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                              const SizedBox(height: 16),
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      item.itemName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
+                                  _buildAnalysisInfoItem("Initial Weight", "${_calculateTotalOriginalWeight().round()} grams"),
+                                  _buildAnalysisInfoItem("Remaining Weight", "${double.tryParse(_weightController.text)?.round() ?? 0} grams"),
+                                  _buildAnalysisInfoItem("Status", "Remaining"),
+                                ],
+                              ),
+                              const Divider(height: 40),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(Icons.auto_awesome, color: Colors.black, size: 20),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "AI Analysis",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                   Text(
-                                    '${item.weight.toStringAsFixed(0)} g',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, size: 18),
-                                    onPressed: () => _removeFoodItem(index),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
+                                    "Food Remaining: ${_calculatePercentageRemaining().toStringAsFixed(1)}%",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              // Slider untuk menyesuaikan berat
-                              Row(
-                                children: [
-                                  const Text('0 g'),
-                                  Expanded(
-                                    child: Slider(
-                                      value: item.weight,
-                                      min: 0,
-                                      max: 500,
-                                      divisions: 50,
-                                      label: item.weight.round().toString(),
-                                      onChanged: (double value) {
-                                        _updateFoodItemWeight(index, value);
-                                      },
-                                    ),
-                                  ),
-                                  const Text('500 g'),
-                                ],
+                              const SizedBox(height: 10),
+                              _buildPercentageIndicator(),
+                            ],
+                          ),
+                        ),
+                    ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Food Components
+                    const Text(
+                      'Food Components',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Food Item Components',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(_showAddFoodItemForm ? Icons.remove : Icons.add),
+                                onPressed: _toggleAddFoodItemForm,
+                                tooltip: _showAddFoodItemForm ? 'Close Form' : 'Add Item',
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Tampilkan potensi foodwaste items yang dapat dimodifikasi
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Potential Foodwaste Items',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon: Icon(_showAddItemForm ? Icons.remove : Icons.add),
-                        onPressed: _toggleAddItemForm,
-                        tooltip: _showAddItemForm ? 'Close Form' : 'Add Item',
-                      ),
-                    ],
-                  ),
-                  
-                  if (_showAddItemForm) ...[
-                    const SizedBox(height: 12),
-                    const Text('Add New Foodwaste Item:'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _newItemNameController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Item Name',
-                        hintText: 'example: Chicken Bone',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _newItemWeightController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Weight (grams)',
-                        hintText: 'example: 25',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _addNewWasteItem,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Add Item'),
-                      ),
-                    ),
-                    const Divider(height: 24),
-                  ],
-                  
-                  const SizedBox(height: 8),
-                  if (_potentialFoodWasteItems.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Text(
-                          'No foodwaste items detected',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _potentialFoodWasteItems.length,
-                      itemBuilder: (context, index) {
-                        final item = _potentialFoodWasteItems[index];
-                        return Dismissible(
-                          key: Key('waste_item_${index}_${item.itemName}'),
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 16),
-                            child: const Icon(Icons.delete, color: Colors.white),
-                          ),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (direction) {
-                            _removeWasteItem(index);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${item.itemName}: ${item.estimatedCarbonEmission.toStringAsFixed(2)} kg CO2',
-                                    style: const TextStyle(fontSize: 15),
+                          
+                          if (_showAddFoodItemForm) ...[
+                            const SizedBox(height: 12),
+                            const Text('Add Food Item:'),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _newItemNameController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Item Name',
+                                hintText: 'example: Fried Chicken',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _newItemWeightController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Weight (grams)',
+                                hintText: 'example: 150',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _addNewFoodItem,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                child: const Text('Add Item'),
+                              ),
+                            ),
+                            const Divider(height: 24),
+                          ],
+                          
+                          if (_foodItems.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  'No food item components detected',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _foodItems.length,
+                              itemBuilder: (context, index) {
+                                final item = _foodItems[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item.itemName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            '${item.weight.toStringAsFixed(0)} g',
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, size: 18),
+                                            onPressed: () => _removeFoodItem(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Slider for adjusting weight
+                                      Row(
+                                        children: [
+                                          const Text('0 g'),
+                                          Expanded(
+                                            child: Slider(
+                                              value: item.weight,
+                                              min: 0,
+                                              max: 500,
+                                              divisions: 50,
+                                              label: item.weight.round().toString(),
+                                              onChanged: (double value) {
+                                                _updateFoodItemWeight(index, value);
+                                              },
+                                            ),
+                                          ),
+                                          const Text('500 g'),
+                                        ],
+                                      ),
+                                    ],
                                   ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Potential Food Waste Items
+                    const Text(
+                      'Potential Food Waste',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Potential Food Waste Items',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, size: 18),
-                                  onPressed: () => _removeWasteItem(index),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  splashRadius: 20,
+                              ),
+                              IconButton(
+                                icon: Icon(_showAddItemForm ? Icons.remove : Icons.add),
+                                onPressed: _toggleAddItemForm,
+                                tooltip: _showAddItemForm ? 'Close Form' : 'Add Item',
+                              ),
+                            ],
+                          ),
+                          
+                          if (_showAddItemForm) ...[
+                            const SizedBox(height: 12),
+                            const Text('Add New Food Waste Item:'),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _newItemNameController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Item Name',
+                                hintText: 'example: Chicken Bone',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _newItemWeightController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Weight (grams)',
+                                hintText: 'example: 25',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _addNewWasteItem,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
-                              ],
+                                child: const Text('Add Item'),
+                              ),
+                            ),
+                            const Divider(height: 24),
+                          ],
+                          
+                          if (_potentialFoodWasteItems.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  'No food waste items detected',
+                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _potentialFoodWasteItems.length,
+                              itemBuilder: (context, index) {
+                                final item = _potentialFoodWasteItems[index];
+                                return Dismissible(
+                                  key: Key('waste_item_${index}_${item.itemName}'),
+                                  background: Container(
+                                    color: Colors.red,
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 16),
+                                    child: const Icon(Icons.delete, color: Colors.white),
+                                  ),
+                                  direction: DismissDirection.endToStart,
+                                  onDismissed: (direction) {
+                                    _removeWasteItem(index);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${item.itemName}: ${item.estimatedCarbonEmission.toStringAsFixed(2)} kg CO2',
+                                            style: const TextStyle(fontSize: 15),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, size: 18),
+                                          onPressed: () => _removeWasteItem(index),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          splashRadius: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          
+                          const SizedBox(height: 8),
+                          if (_potentialFoodWasteItems.isNotEmpty)
+                            const Text(
+                              'Swipe item to the left to delete',
+                              style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                            ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Avoid throwing away leftover food to reduce carbon footprint.',
+                            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Total Food Weight
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Food Weight',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _weightController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Total Food Weight (grams)',
+                              hintText: 'Example: 250',
+                            ),
+                            onChanged: (value) {
+                              // Trigger rebuild to update percentage calculation
+                              if (widget.isRemainingFoodScan) {
+                                setState(() {});
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Switch to mark food as completely eaten
+                          if (widget.isRemainingFoodScan)
+                            SwitchListTile(
+                              title: Text(
+                                'Food eaten completely',
+                                style: TextStyle(
+                                  color: _isEaten ? Colors.green : Colors.black,
+                                ),
+                              ),
+                              value: _isEaten,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isEaten = value;
+                                  // If completely eaten, set remaining weight to 0
+                                  if (_isEaten) {
+                                    _weightController.text = '0';
+                                  }
+                                });
+                              },
+                              activeColor: Colors.black,
+                            ),
+                        ],
+                      ),
                     ),
-                  
-                  const SizedBox(height: 8),
-                  if (_potentialFoodWasteItems.isNotEmpty)
-                    const Text(
-                      'Swipe item to the left to delete',
-                      style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                    
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _resetScan,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text(
+                              'Retake Photo',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _isSaving ? null : _saveFoodScan,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: Text(
+                              widget.isRemainingFoodScan ? 'Save Leftover Data' : 'Save Data',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Avoid throwing away leftover food to reduce carbon footprint.',
-                    style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                    
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        // Loading overlay
+        if (_isSaving)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            width: double.infinity,
+            height: double.infinity,
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.white),
+                  SizedBox(height: 20),
+                  Text(
+                    'Saving food data...',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Form untuk berat makanan
-          TextField(
-            controller: _weightController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Total Food Weight (grams)',
-              hintText: 'Example: 250',
-            ),
-            onChanged: (value) {
-              // Trigger rebuild untuk memperbarui perhitungan persentase
-              if (widget.isRemainingFoodScan) {
-                setState(() {});
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          
-          // Switch untuk menandai makanan sudah dimakan
-          if (widget.isRemainingFoodScan)
-            SwitchListTile(
-              title: Text(
-                'Food eaten completely',
-                style: TextStyle(
-                  color: _isEaten ? Colors.green : Colors.black,
-                ),
-              ),
-              value: _isEaten,
-              onChanged: (value) {
-                setState(() {
-                  _isEaten = value;
-                  // Jika habis dimakan, set berat sisa menjadi 0
-                  if (_isEaten) {
-                    _weightController.text = '0';
-                  }
-                });
-              },
-              activeColor: AppColors.primaryColor,
-            ),
-          const SizedBox(height: 24),
-          
-          // Tombol simpan
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saveFoodScan,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                backgroundColor: AppColors.primaryColor,
-              ),
-              child: Text(
-                widget.isRemainingFoodScan ? 'Save Leftover Food Data' : 'Save Food Data',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Tombol ambil ulang gambar
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _resetScan,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text(
-                'Retake Photo',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
+  }
+  
+  Widget _buildAnalysisInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    
+    return '$hour.$minute';
+  }
+  
+  String _formatDuration(Duration duration) {
+    if (duration.inHours < 1) {
+      return '${duration.inMinutes} min';
+    } else if (duration.inHours == 1) {
+      return '1 hour';
+    } else {
+      return '${duration.inHours} hours';
+    }
   }
   
   // Menghitung persentase makanan yang tersisa
