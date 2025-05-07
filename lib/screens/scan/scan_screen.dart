@@ -8,6 +8,7 @@ import '../../models/food_scan_model.dart';
 import '../../utils/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/food_scan_camera_widget.dart';
+import '../../services/firestore_service.dart'; // Ensure this is the correct path to FirestoreService
 
 class CornerPainter extends CustomPainter {
   final Color color;
@@ -222,6 +223,8 @@ class _ScanScreenState extends State<ScanScreen> {
     
     try {
       final provider = Provider.of<FoodScanProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
       final result = await provider.scanFoodImage(_image!);
       
       if (result != null) {
@@ -254,6 +257,13 @@ class _ScanScreenState extends State<ScanScreen> {
           _isAnalyzing = false;
           _analysisComplete = true;
         });
+
+        // Update quest progress for "scan" quest type
+        if (authProvider.user != null) {
+          final firestoreService = FirestoreService();
+          await firestoreService.updateQuestProgress(authProvider.user!.id, 'scan', {'scanCount': 1});
+        }
+
       } else {
         // Handle analysis failure
         setState(() {

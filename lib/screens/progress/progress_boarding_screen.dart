@@ -50,8 +50,8 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
           _isLoading = false;
         });
 
-        debugPrint('Real-time Weekly Summary Data:');
-        debugPrint(_weeklySummary.toString());
+        // debugPrint('Real-time Weekly Summary Data:');
+        // debugPrint(_weeklySummary.toString());
       }, onError: (e) {
         debugPrint('Error listening to weekly summary: $e');
         setState(() {

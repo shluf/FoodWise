@@ -229,7 +229,7 @@ class FirestoreService {
           'points': doc.data()['points'] ?? 0,
         };
       }).toList();
-      debugPrint('Leaderboard data fetched: $leaderboardData'); // Debug log
+      // debugPrint('Leaderboard data fetched: $leaderboardData'); 
       return leaderboardData;
     });
   }
@@ -270,7 +270,8 @@ Stream<List<QuestModel>> getUserQuestsStream(String userId) {
     if (snapshot.exists && snapshot.data() != null) {
       final questsData = snapshot.data()!['quest'] as List<dynamic>? ?? [];
       return questsData.map((quest) {
-        return QuestModel.fromMap(quest as Map<String, dynamic>, null);
+        final id = quest['id'] ?? '';
+        return QuestModel.fromMap(quest as Map<String, dynamic>, id);
       }).toList();
     }
     return [];
@@ -295,6 +296,74 @@ Stream<int> getUserPointsStream(String userId) {
     }
     return 0;
   });
+}
+
+Future<void> updateQuestProgress(String userId, String questType, Map<String, dynamic> progressUpdate) async {
+  try {
+    final userDoc = _firestore.collection('users').doc(userId);
+    final userSnapshot = await userDoc.get();
+
+    if (userSnapshot.exists) {
+      final quests = List<Map<String, dynamic>>.from(userSnapshot.data()?['quest'] ?? []);
+      for (var quest in quests) {
+        if (quest['questType'] == questType && quest['status'] != 'claimed') {
+          // Safely update progress
+          quest['progress'] = {
+            ...quest['progress'],
+            ...progressUpdate.map((key, value) => MapEntry(key, (quest['progress'][key] ?? 0) + value)),
+          };
+
+          // Safely check if the quest is completed
+          final requirements = Map<String, dynamic>.from(quest['requirements'] ?? {});
+          final isCompleted = requirements.entries.every((entry) {
+            final progressValue = quest['progress'][entry.key] ?? 0;
+            return progressValue >= entry.value;
+          });
+
+          if (isCompleted) {
+            debugPrint('Quest is completed for questId: ${quest['id']}');
+            quest['status'] = 'completed';
+          } else {
+            debugPrint('Quest is not completed yet for questId: ${quest['id']}, setting to ongoing');
+            quest['status'] = 'ongoing';
+          }
+        }
+      }
+
+      debugPrint('Updated quests to Firestore: $quests');
+      await userDoc.update({'quest': quests});
+    }
+  } catch (e) {
+    debugPrint('Error updating quest progress: $e');
+    rethrow;
+  }
+}
+
+Future<void> claimQuest(String userId, String questTitle) async {
+  try {
+    final userDoc = _firestore.collection('users').doc(userId);
+    final userSnapshot = await userDoc.get();
+
+    if (userSnapshot.exists) {
+      final quests = List<Map<String, dynamic>>.from(userSnapshot.data()?['quest'] ?? []);
+      int pointsToAdd = 0;
+
+      for (var quest in quests) {
+        if (quest['title'] == questTitle && quest['status'] == 'completed') {
+          quest['status'] = 'claimed';
+          pointsToAdd += (quest['points'] as int);
+        }
+      }
+
+      await userDoc.update({
+        'quest': quests,
+        'points': FieldValue.increment(pointsToAdd),
+      });
+    }
+  } catch (e) {
+    print('Error claiming quest: $e');
+    rethrow;
+  }
 }
 
   
@@ -332,7 +401,7 @@ Stream<int> getUserPointsStream(String userId) {
         // Calculate summary data
         final Map<String, dynamic> summaryData = _calculateSummary(foodScans);
 
-        debugPrint('Weekly summary data: $summaryData');
+        // debugPrint('Weekly summary data: $summaryData');
 
         // Save summary to Firestore
         await saveWeeklySummary(userId, summaryData);
@@ -363,13 +432,13 @@ Stream<int> getUserPointsStream(String userId) {
       },
     };
 
-    debugPrint("Data foodScans untuk summary dengan panjang ${foodScans.length}:");
-    for (var scan in foodScans) {
-      debugPrint("Scan ID: ${scan.id}, Scan Time: ${scan.scanTime}, Food Items: ${scan.foodItems}");
-      for(var item in scan.foodItems ?? []) {
-        debugPrint("Item Name: ${item.itemName}, Weight: ${item.weight}, Remaining Weight: ${item.remainingWeight}");
-      }
-    }
+    // debugPrint("Data foodScans untuk summary dengan panjang ${foodScans.length}:");
+    // for (var scan in foodScans) {
+    //   debugPrint("Scan ID: ${scan.id}, Scan Time: ${scan.scanTime}, Food Items: ${scan.foodItems}");
+    //   for(var item in scan.foodItems ?? []) {
+    //     debugPrint("Item Name: ${item.itemName}, Weight: ${item.weight}, Remaining Weight: ${item.remainingWeight}");
+    //   }
+    // }
 
     double totalWeight = 0.0;
     Map<String, double> categoryWaste = {"Carbohydrate": 0.0, "Protein": 0.0, "Vegetables": 0.0};
