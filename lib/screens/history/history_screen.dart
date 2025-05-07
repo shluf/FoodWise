@@ -7,6 +7,7 @@ import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../widgets/food_comparison_result_widget.dart';
 import '../../utils/dummy_data_generator.dart'; // Import DummyDataGenerator
+import '../scan/food_waste_scan_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -36,7 +37,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Riwayat Pemindaian'),
+        title: const Text('Scan History'),
         // ===================== TEMPORARY DUMMY BUTTON START =====================
         actions: [
           Padding(
@@ -58,7 +59,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: const Text(
                 'Generate Dummy',
                 style: TextStyle(
-                  color: Colors.blue, // Text color
+                  color: Colors.black, // Changed to black
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -68,7 +69,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         // ===================== TEMPORARY DUMMY BUTTON END =====================
       ),
       body: foodScanProvider.isLoading 
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : foodScanProvider.foodScans.isEmpty
               ? _buildEmptyState()
               : _buildFoodScansList(foodScanProvider.foodScans),
@@ -87,7 +88,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Belum ada riwayat pemindaian',
+            'No scan history',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -96,7 +97,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Scan makanan Anda untuk melihat riwayat di sini',
+            'Scan your food to see history here',
             style: TextStyle(
               color: Colors.grey[600],
             ),
@@ -107,7 +108,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
   
   Widget _buildFoodScansList(List<FoodScanModel> foodScans) {
-    // Sort berdasarkan waktu scan, dari yang terbaru
+    // Sort based on scan time, newest first
     final sortedScans = List<FoodScanModel>.from(foodScans)
       ..sort((a, b) => b.scanTime.compareTo(a.scanTime));
       
@@ -127,7 +128,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     
     return GestureDetector(
       onTap: () {
-        // Jika item riwayat diklik, tampilkan hasil analisis jika ada
+        // If history item is clicked, show analysis results if available
         if (scan.isDone) {
           _showAnalysisDetails(scan);
         }
@@ -135,13 +136,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         elevation: 2,
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar dengan badge AI jika ada analisis AI
+            // Image with AI badge if AI analysis exists
             Stack(
               children: [
                 if (scan.imageUrl != null && scan.imageUrl!.isNotEmpty)
@@ -156,7 +159,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         child: SizedBox(
                           width: 30,
                           height: 30,
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(color: Colors.black),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
@@ -167,7 +170,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                   ),
                   
-                // Badge AI jika ada analisis AI
+                // AI badge if AI analysis exists
                 if (hasAiAnalysis)
                   Positioned(
                     top: 8,
@@ -175,7 +178,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.9),
+                        color: Colors.black.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Row(
@@ -211,12 +214,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: scan.isDone ? Colors.green[100] : Colors.red[100],
+                          color: scan.isDone ? Colors.grey[200] : Colors.grey[300],
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           scan.isDone ? Icons.check_circle : Icons.warning,
-                          color: scan.isDone ? Colors.green : Colors.red,
+                          color: scan.isDone ? Colors.green : Colors.grey[700],
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -229,6 +232,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
                             Text(
@@ -240,40 +244,41 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _editScan(scan),
-                      ),
+                      if (scan.isDone && !scan.isEaten)
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.black),
+                          onPressed: () => _editScan(scan),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Divider(),
+                  const Divider(color: Colors.grey),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildInfoItem('Berat Awal', '${_calculateTotalWeight(scan).toStringAsFixed(1)} gram'),
+                      _buildInfoItem('Initial Weight', '${_calculateTotalWeight(scan).toStringAsFixed(1)} grams'),
                       if (scan.isDone)
-                        _buildInfoItem('Berat Sisa', '${_calculateTotalRemainingWeight(scan).toStringAsFixed(1)} gram'),
+                        _buildInfoItem('Remaining Weight', '${_calculateTotalRemainingWeight(scan).toStringAsFixed(1)} grams'),
                       _buildInfoItem(
                         'Status', 
-                        scan.isDone ? (scan.isEaten ? 'Habis dimakan' : 'Tersisa') : 'Belum selesai',
-                        color: scan.isDone ? (scan.isEaten ? Colors.green : Colors.orange) : Colors.red,
+                        scan.isDone ? (scan.isEaten ? 'Consumed' : 'Leftover') : 'Incomplete',
+                        color: scan.isDone ? (scan.isEaten ? Colors.black : Colors.grey[700]) : Colors.grey[600],
                       ),
                     ],
                   ),
                   
-                  // Informasi analisis AI jika ada
+                  // AI analysis information if available
                   if (hasAiAnalysis) ...[
                     const SizedBox(height: 12),
-                    const Divider(),
+                    const Divider(color: Colors.grey),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: Colors.blue),
+                        const Icon(Icons.auto_awesome, color: Colors.black),
                         const SizedBox(width: 8),
                         const Text(
-                          'Analisis AI',
+                          'AI Analysis',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -281,7 +286,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         const Spacer(),
                         Text(
-                          'Sisa: ${scan.aiRemainingPercentage!.toStringAsFixed(1)}%',
+                          'Remaining: ${scan.aiRemainingPercentage!.toStringAsFixed(1)}%',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -290,14 +295,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
-                      value: 1 - (scan.aiRemainingPercentage! / 100), // Ubah logika di sini
+                      value: 1 - (scan.aiRemainingPercentage! / 100),
                       minHeight: 8,
                       backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.black),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Ketuk untuk melihat detail analisis',
+                      'Tap to view analysis details',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -308,30 +313,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   
                   if (!scan.isDone) ...[
                     const SizedBox(height: 16),
-                    Card(
-                      margin: EdgeInsets.zero,
-                      color: Colors.amber[50],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info,
-                              color: Colors.amber[700],
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FoodWasteScanScreen(
+                              foodScanId: scan.id,
                             ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'Makanan ini tidak dihabiskan, yang berarti terhitung sebagai food waste',
-                                style: TextStyle(
-                                  color: Colors.black87,
+                          ),
+                        );
+                      },
+                      child: Card(
+                        margin: EdgeInsets.zero,
+                        color: Colors.grey[200],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info,
+                                color: Colors.grey[700],
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'This food is not finished yet, please update once it\'s done',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -369,10 +386,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
   
   void _showAnalysisDetails(FoodScanModel scan) {
-    // Jika tidak ada AI Remaining Percentage, berarti tidak ada analisis AI
+    // If there's no AI Remaining Percentage, there's no AI analysis
     if (scan.aiRemainingPercentage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada hasil analisis AI untuk pemindaian ini')),
+        const SnackBar(content: Text('No AI analysis results for this scan')),
       );
       return;
     }
@@ -384,16 +401,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
           foodScan: scan,
           remainingPercentage: scan.aiRemainingPercentage!,
           confidence: scan.aiConfidence ?? 0.5,
-          // Tidak perlu file lokal karena kita sudah punya URL gambar dari Firestore
+          // Local file not needed as we already have the image URL from Firestore
         ),
       ),
     );
   }
   
   void _editScan(FoodScanModel scan) {
-    // Implementasi edit akan dibuat nanti
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit fitur akan segera tersedia')),
+    if (scan.aiRemainingPercentage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No AI analysis results available for editing')),
+      );
+      return;
+    }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FoodComparisonResultWidget(
+          foodScan: scan,
+          remainingPercentage: scan.aiRemainingPercentage!,
+          confidence: scan.aiConfidence ?? 0.5,
+        ),
+      ),
     );
   }
 
