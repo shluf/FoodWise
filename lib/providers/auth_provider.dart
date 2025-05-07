@@ -293,6 +293,29 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
+  Future<void> loadUser() async {
+    try {
+      _setLoading(true);
+      _error = null;
+
+      final isLoggedInLocally = await LocalAuthService.isLoggedIn();
+      final cachedUserId = await LocalAuthService.getUserId();
+
+      if (isLoggedInLocally && cachedUserId != null) {
+        final userData = await _authService.getUserData(cachedUserId);
+        if (userData != null) {
+          _user = userData;
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error loading user: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();

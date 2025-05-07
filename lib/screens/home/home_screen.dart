@@ -88,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _extractDominantColor();
+    _initializeQuests();
 
     // Validasi sesi
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -108,6 +109,15 @@ class _HomeScreenState extends State<HomeScreen> {
         await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
       }
     });
+  }
+
+  Future<void> _initializeQuests() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
+
+    if (authProvider.user != null) {
+      await firestoreService.initializeUserQuests(authProvider.user!.id);
+    }
   }
 
   Future<void> _extractDominantColor() async {

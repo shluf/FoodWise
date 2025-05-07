@@ -64,7 +64,7 @@ class _QuestScreenState extends State<QuestScreen> {
         setState(() {
           _rawQuests = quests.map((quest) => quest.toMap()).toList();
         });
-        debugPrint('Quests fetched: $_rawQuests'); // Log fetched quests
+        // debugPrint('Quests fetched: $_rawQuests'); 
       } catch (e) {
         debugPrint('Error fetching quests: $e'); // Log errors
       }

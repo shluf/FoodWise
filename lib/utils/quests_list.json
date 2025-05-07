@@ -1,0 +1,97 @@
+{
+  "quest": [
+    {
+      "description": "Welcome, Food Hero! this is your first scan :)",
+      "id": "scan_1",
+      "points": 5,
+      "progress": {
+        "scanCount": 0
+      },
+      "questType": "scan",
+      "requirements": {
+        "scanCount": 1
+      },
+      "status": "ongoing",
+      "title": "First Bite, First Step"
+    },
+    {
+      "description": "Complete 3 scans to become a Scan Master.",
+      "id": "scan_2",
+      "points": 10,
+      "progress": {
+        "scanCount": 0
+      },
+      "questType": "scan",
+      "requirements": {
+        "scanCount": 3
+      },
+      "status": "ongoing",
+      "title": "Scan Master"
+    },
+    {
+      "description": "You\u2019re getting good! Scan 5 more items.",
+      "id": "scan_3",
+      "points": 15,
+      "progress": {
+        "scanCount": 0
+      },
+      "requirements": {
+        "scanCount": 5
+      },
+      "status": "ongoing",
+      "title": "Getting the Hang of It"
+    },
+    {
+      "description": "Scan 10 items to earn the Bronze Scanner Badge.",
+      "id": "scan_4",
+      "points": 25,
+      "progress": {
+        "scanCount": 0
+      },
+      "requirements": {
+        "scanCount": 10
+      },
+      "status": "ongoing",
+      "title": "Bronze Badge Seeker"
+    },
+    {
+      "description": "Halfway to mastery! Scan 15 items.",
+      "id": "scan_5",
+      "points": 30,
+      "progress": {
+        "scanCount": 0
+      },
+      "requirements": {
+        "scanCount": 15
+      },
+      "status": "ongoing",
+      "title": "Silver Steps"
+    },
+    {
+      "description": "Scan 20 items and claim your Silver Scanner Badge.",
+      "id": "scan_6",
+      "points": 40,
+      "progress": {
+        "scanCount": 0
+      },
+      "requirements": {
+        "scanCount": 20
+      },
+      "status": "ongoing",
+      "title": "Silver Scanner"
+    },
+    {
+      "description": "Final Challenge! Scan 30 items to become a true Scan Hero.",
+      "id": "scan_7",
+      "points": 50,
+      "progress": {
+        "scanCount": 0
+      },
+      "requirements": {
+        "scanCount": 30
+      },
+      "status": "ongoing",
+      "title": "Scan Hero"
+    }
+  ]
+}

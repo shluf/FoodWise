@@ -5,6 +5,9 @@ import '../models/quest_model.dart';
 import '../models/user_model.dart';
 import '../models/leaderboard_entry_model.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
+
 
 
 class FirestoreService {
@@ -321,16 +324,16 @@ Future<void> updateQuestProgress(String userId, String questType, Map<String, dy
           });
 
           if (isCompleted) {
-            debugPrint('Quest is completed for questId: ${quest['id']}');
+            // debugPrint('Quest is completed for questId: ${quest['id']}');
             quest['status'] = 'completed';
           } else {
-            debugPrint('Quest is not completed yet for questId: ${quest['id']}, setting to ongoing');
+            // debugPrint('Quest is not completed yet for questId: ${quest['id']}, setting to ongoing');
             quest['status'] = 'ongoing';
           }
         }
       }
 
-      debugPrint('Updated quests to Firestore: $quests');
+      // debugPrint('Updated quests to Firestore: $quests');
       await userDoc.update({'quest': quests});
     }
   } catch (e) {
@@ -363,6 +366,51 @@ Future<void> claimQuest(String userId, String questTitle) async {
   } catch (e) {
     print('Error claiming quest: $e');
     rethrow;
+  }
+}
+
+Future<void> generateQuestList(String userId) async {
+  try {
+    final userDoc = _firestore.collection('users').doc(userId);
+    final userSnapshot = await userDoc.get();
+
+    if (userSnapshot.exists) {
+      final userData = userSnapshot.data();
+      final quests = userData?['quest'] as List<dynamic>?;
+
+      // Check if the quest field is null or empty
+      if (quests == null || quests.isEmpty) {
+        // Load quests from the JSON file
+        final questJson = await rootBundle.loadString('lib/utils/quests_list.json');
+        final questData = json.decode(questJson)['quest'] as List<dynamic>;
+
+        // Ensure questData is a list of maps
+        if (questData is List) {
+          // Update the user's quest field in Firestore
+          await userDoc.update({'quest': questData});
+          debugPrint('Quest list generated and added to Firestore for user: $userId');
+        } else {
+          throw Exception('Invalid quest data format in JSON.');
+        }
+      } else {
+        debugPrint('User already has quests, no need to generate.');
+      }
+    } else {
+      debugPrint('User document does not exist for userId: $userId');
+    }
+  } catch (e) {
+    debugPrint('Error generating quest list: $e');
+    rethrow;
+  }
+}
+
+Future<void> initializeUserQuests(String userId) async {
+  try {
+    debugPrint('Initializing user quests...');
+    await generateQuestList(userId);
+    debugPrint('User quests initialization complete.');
+  } catch (e) {
+    debugPrint('Error during user quests initialization: $e');
   }
 }
 
