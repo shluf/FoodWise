@@ -88,10 +88,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _extractDominantColor();
 
     // Validasi sesi
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
       final gamificationProvider = Provider.of<GamificationProvider>(context, listen: false);
+      final firestoreService = FirestoreService(); // Tambahkan instance FirestoreService
 
       authProvider.validateSession();
 
@@ -100,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
         foodScanProvider.loadWeeklyFoodWaste(authProvider.user!.id);
         gamificationProvider.loadLeaderboard();
         gamificationProvider.loadQuests();
+
+        // Trigger generate and save weekly summary
+        await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
       }
     });
   }
@@ -1243,6 +1247,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showFinishFoodDialog(BuildContext context, FoodScanModel scan) {
+    final firestoreService = FirestoreService(); // Add FirestoreService instance
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1250,24 +1256,30 @@ class _HomeScreenState extends State<HomeScreen> {
         content: const Text('Apakah makanan ini sudah habis atau masih tersisa?'),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              
+
               // Update sebagai selesai tanpa sisa
               final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
               final updatedScan = scan.copyWith(
                 isDone: true,
                 isEaten: true,
               );
-              
-              foodScanProvider.updateFoodScan(updatedScan);
+
+              await foodScanProvider.updateFoodScan(updatedScan);
+
+              // Trigger generate and save weekly summary
+              if (authProvider.user != null) {
+                await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+              }
             },
             child: const Text('Habis'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              
+
               // Navigate ke FoodWasteScanScreen untuk menggunakan AI perbandingan
               Navigator.push(
                 context,
@@ -1277,6 +1289,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               );
+
+              // Trigger generate and save weekly summary
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              if (authProvider.user != null) {
+                await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
