@@ -220,6 +220,20 @@ class FirestoreService {
     }
   }
 
+  Stream<List<Map<String, dynamic>>> getLeaderboardStream() {
+    return _firestore.collection('users').orderBy('points', descending: true).snapshots().map((snapshot) {
+      final leaderboardData = snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'username': doc.data()['username'] ?? 'Unknown',
+          'points': doc.data()['points'] ?? 0,
+        };
+      }).toList();
+      debugPrint('Leaderboard data fetched: $leaderboardData'); // Debug log
+      return leaderboardData;
+    });
+  }
+
   // Gamifikasi Collection
   // =====================
   
