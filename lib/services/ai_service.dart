@@ -378,7 +378,7 @@ class AIService {
         scanMap['userId'] = scan.userId;
         scanMap['foodName'] = scan.foodName;
         scanMap['scanTime'] = scan.scanTime.toIso8601String();
-        scanMap['finishTime'] = scan.finishTime.toIso8601String();
+        scanMap['finishTime'] = scan.finishTime?.toIso8601String();
         scanMap['isDone'] = scan.isDone;
         scanMap['isEaten'] = scan.isEaten;
         

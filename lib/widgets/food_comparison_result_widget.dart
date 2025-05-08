@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/food_scan_model.dart';
+import '../screens/scan/food_waste_scan_screen.dart';
 
 class FoodComparisonResultWidget extends StatelessWidget {
   final FoodScanModel foodScan;
@@ -9,6 +10,8 @@ class FoodComparisonResultWidget extends StatelessWidget {
   final double confidence;
   final File? beforeImageFile;
   final File? afterImageFile;
+  final String? beforeImageUrl;
+  final String? afterImageUrl;
   
   const FoodComparisonResultWidget({
     Key? key,
@@ -17,6 +20,8 @@ class FoodComparisonResultWidget extends StatelessWidget {
     required this.confidence,
     this.beforeImageFile,
     this.afterImageFile,
+    this.beforeImageUrl,
+    this.afterImageUrl,
   }) : super(key: key);
 
   @override
@@ -37,7 +42,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
               padding: const EdgeInsets.only(left: 8, top: 8),
               child: CircleAvatar(
                 backgroundColor: Colors.white,
-                radius: 20,
+                radius: 6,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.of(context).pop(),
@@ -76,16 +81,45 @@ class FoodComparisonResultWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            foodScan.foodName,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              foodScan.foodName,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                            
+                            // Duration Badge
+                            Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.timer, size: 15, color: Colors.black54),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatDuration(foodScan.finishTime?.difference(foodScan.scanTime) ?? Duration.zero),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -96,7 +130,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
                         child: const Row(
                           children: [
                             Text('1 ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('/', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Icon(Icons.colorize, size: 16),
                           ],
                         ),
                       ),
@@ -241,7 +275,16 @@ class FoodComparisonResultWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FoodWasteScanScreen(
+                      foodScanId: foodScan.id,
+                    ),
+                  ),
+                );
+              },
               icon: const Icon(Icons.auto_awesome, size: 18),
               label: const Text('Fix Result'),
               style: OutlinedButton.styleFrom(
@@ -254,7 +297,6 @@ class FoodComparisonResultWidget extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {},
-              child: const Text('Done'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
@@ -262,6 +304,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               ),
+              child: const Text('Done'),
             ),
           ],
         ),
@@ -365,12 +408,15 @@ class FoodComparisonResultWidget extends StatelessWidget {
           
           // Carbon emissions
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.eco, color: Colors.black, size: 18),
               const SizedBox(width: 8),
-              Text(
-                "Carbon emissions from food waste: ${carbonEmission.toStringAsFixed(2)} kg CO2",
-                style: const TextStyle(fontSize: 14),
+              Expanded(
+                child: Text(
+                  "Carbon emissions from food waste: ${carbonEmission.toStringAsFixed(2)} kg CO2",
+                  style: const TextStyle(fontSize: 14),
+                ),
               ),
             ],
           ),
@@ -379,12 +425,15 @@ class FoodComparisonResultWidget extends StatelessWidget {
           
           // Water wasted
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.water_drop, color: Colors.black, size: 18),
               const SizedBox(width: 8),
-              Text(
-                "Water wasted in the manufacturing process: ${waterWasted.toStringAsFixed(1)} liter",
-                style: const TextStyle(fontSize: 14),
+              Expanded(
+                child: Text(
+                  "Water wasted in the manufacturing process: ${waterWasted.toStringAsFixed(1)} liter",
+                  style: const TextStyle(fontSize: 14),
+                ),
               ),
             ],
           ),
@@ -392,13 +441,22 @@ class FoodComparisonResultWidget extends StatelessWidget {
           const SizedBox(height: 16),
           
           // Tip text
-          Text(
-            "By reducing food waste, you help reduce the environmental impact of food production and disposal.",
-            style: TextStyle(
-              fontSize: 14,
-              fontStyle: FontStyle.italic,
-              color: Colors.grey[700],
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline, color: Colors.grey, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  "By reducing food waste, you help reduce the environmental impact of food production and disposal.",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -578,63 +636,103 @@ class FoodComparisonResultWidget extends StatelessWidget {
   }
   
   Widget _buildBeforeImage() {
-    if (beforeImageFile != null) {
-      return Image.file(
-        beforeImageFile!,
+    // Prioritaskan URL jika tersedia
+    if (beforeImageUrl != null && beforeImageUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: beforeImageUrl!,
         fit: BoxFit.cover,
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        errorWidget: (context, url, error) => const Center(
+          child: Icon(Icons.error, color: Colors.red, size: 40),
+        ),
       );
-    } else if (foodScan.imageUrl != null && foodScan.imageUrl!.isNotEmpty) {
+    }
+    
+    // Gunakan URL dari food scan jika tersedia
+    if (foodScan.imageUrl != null && foodScan.imageUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: foodScan.imageUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => const Center(
           child: CircularProgressIndicator(),
         ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey[300],
-          child: const Center(
-            child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        color: Colors.grey[300],
-        child: const Center(
-          child: Text('No image'),
+        errorWidget: (context, url, error) => const Center(
+          child: Icon(Icons.error, color: Colors.red, size: 40),
         ),
       );
     }
+    
+    // Gunakan file lokal jika tersedia
+    if (beforeImageFile != null) {
+      return Image.file(
+        beforeImageFile!,
+        fit: BoxFit.cover,
+      );
+    }
+    
+    // Fallback
+    return Container(
+      color: Colors.grey[300],
+      child: const Center(
+        child: Icon(
+          Icons.image_not_supported,
+          size: 50,
+          color: Colors.grey,
+        ),
+      ),
+    );
   }
   
   Widget _buildAfterImage() {
-    if (afterImageFile != null) {
-      return Image.file(
-        afterImageFile!,
+    // Prioritaskan URL jika tersedia
+    if (afterImageUrl != null && afterImageUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: afterImageUrl!,
         fit: BoxFit.cover,
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        errorWidget: (context, url, error) => const Center(
+          child: Icon(Icons.error, color: Colors.red, size: 40),
+        ),
       );
-    } else if (foodScan.afterImageUrl != null && foodScan.afterImageUrl!.isNotEmpty) {
+    }
+    
+    // Gunakan URL dari food scan jika tersedia
+    if (foodScan.afterImageUrl != null && foodScan.afterImageUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: foodScan.afterImageUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => const Center(
           child: CircularProgressIndicator(),
         ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey[300],
-          child: const Center(
-            child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        color: Colors.grey[300],
-        child: const Center(
-          child: Text('No image'),
+        errorWidget: (context, url, error) => const Center(
+          child: Icon(Icons.error, color: Colors.red, size: 40),
         ),
       );
     }
+    
+    // Gunakan file lokal jika tersedia
+    if (afterImageFile != null) {
+      return Image.file(
+        afterImageFile!,
+        fit: BoxFit.cover,
+      );
+    }
+    
+    // Fallback
+    return Container(
+      color: Colors.grey[300],
+      child: const Center(
+        child: Icon(
+          Icons.image_not_supported,
+          size: 50,
+          color: Colors.grey,
+        ),
+      ),
+    );
   }
   
   String _formatTime(DateTime dateTime) {
@@ -642,6 +740,16 @@ class FoodComparisonResultWidget extends StatelessWidget {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     
     return '$hour.$minute';
+  }
+  
+  String _formatDuration(Duration duration) {
+    if (duration.inHours < 1) {
+      return '${duration.inMinutes} min';
+    } else if (duration.inHours == 1) {
+      return '1 hour';
+    } else {
+      return '${duration.inHours} hours';
+    }
   }
   
   String _formatDate(DateTime dateTime) {

@@ -10,7 +10,6 @@ import '../../providers/food_scan_provider.dart';
 import '../../providers/gamification_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../history/history_screen.dart';
-import '../educational/educational_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
@@ -137,9 +136,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 4) {
+      // Buka profile screen sebagai layar terpisah
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
@@ -149,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
       const ProgressBoardingScreen(),
       Container(), // Placeholder untuk tombol scan
       const MainScreen(),
-      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -764,6 +770,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontSize: 16,
                                                   color: Colors.black,
                                                 ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           
@@ -802,6 +810,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 color: Colors.grey[600],
                                               ),
                                             ),
+                                            const SizedBox(width: 12),
+                                            
+                                            if (scan.isDone)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[200],
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.timer, size: 14, color: Colors.black54),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      _formatDuration(scan.finishTime?.difference(scan.scanTime) ?? Duration.zero),
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w500,
+                                                        color: Colors.black54,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                           ],
                                         ),
                                       ),
@@ -1055,90 +1088,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        // if (_getScansForSelectedDate(foodScanProvider).isNotEmpty)
-        //   Container(
-        //     margin: const EdgeInsets.only(top: 8),
-        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        //     decoration: BoxDecoration(
-        //       color: Colors.green.withOpacity(0.1),
-        //       borderRadius: BorderRadius.circular(8),
-        //     ),
-        //     child: Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         const Icon(
-        //           Icons.eco,
-        //           color: Colors.green,
-        //           size: 16,
-        //         ),
-        //         const SizedBox(width: 4),
-        //         Text(
-        //           'Anda menghemat ${_calculateCarbonSavedForDay(_getScansForSelectedDate(foodScanProvider)).toStringAsFixed(2)} kg CO₂',
-        //           style: const TextStyle(
-        //             color: Colors.green,
-        //             fontSize: 12,
-        //             fontWeight: FontWeight.bold,
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
       ],
     );
   }
 
-  Widget _buildDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(8, (index) {
-          final day = _firstDay.add(Duration(days: index));
-          final isSelected = DateUtils.isSameDay(day, _selectedDate);
-          final dayName = DateFormat('E', 'id_ID').format(day).substring(0, 1).toUpperCase();
-          final dayNumber = day.day.toString();
-          final hasScans = _getScansForDay(foodScanProvider, day).isNotEmpty;
-          
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedDate = day;
-              });
-            },
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? Theme.of(context).primaryColor : (hasScans ? Colors.grey[300] : Colors.grey[200]),
-              ),
-              child: Stack(
-                children: [
-                  if (!isSelected)
-                    CustomPaint(
-                      size: const Size(36, 36),
-                      painter: DashedCircleBorderPainter(
-                        color: Colors.grey,
-                      ),
-                    ),
-                  Center(
-                    child: Text(
-                      dayNumber,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : Theme.of(context).primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
   
   List<FoodScanModel> _getScansForDay(FoodScanProvider provider, DateTime day) {
     return provider.foodScans.where((scan) => 
@@ -1150,106 +1103,6 @@ class _HomeScreenState extends State<HomeScreen> {
   
   List<FoodScanModel> _getScansForSelectedDate(FoodScanProvider provider) {
     return _getScansForDay(provider, _selectedDate);
-  }
-  
-  Widget _buildScanList(FoodScanProvider provider) {
-    final scans = _getScansForSelectedDate(provider);
-    double totalCarbonSaved = _calculateCarbonSavedForDay(scans);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.eco,
-                  color: Colors.green,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Anda menghemat ${totalCarbonSaved.toStringAsFixed(2)} kg CO₂ hari ini',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: scans.length > 3 ? 3 : scans.length,
-          itemBuilder: (context, index) {
-            final scan = scans[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.restaurant,
-                    color: Colors.amber,
-                  ),
-                ),
-                title: Text(
-                  scan.foodName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  DateFormat('HH:mm').format(scan.scanTime),
-                ),
-                trailing: Text(
-                  '${_calculateTotalWeight(scan).toStringAsFixed(0)} g',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-          },
-        ),
-        if (scans.length > 3)
-          Center(
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CalendarScreen()),
-                );
-              },
-              child: const Text('Lihat Semua'),
-            ),
-          ),
-      ],
-    );
-  }
-  
-  double _calculateCarbonSavedForDay(List<FoodScanModel> scans) {
-    double totalWeightSaved = 0;
-    for (var scan in scans) {
-      if (scan.isDone && scan.isEaten) {
-        // Jika makanan dimakan, hitung sebagai penghematan
-        double totalWeight = _calculateTotalWeight(scan);
-        totalWeightSaved += totalWeight;
-      }
-    }
-    // Asumsi: 1 kg makanan = 2.5 kg CO2
-    return totalWeightSaved / 1000 * 2.5;
   }
   
   String _calculateCarbonEmission(FoodScanProvider provider) {
@@ -1292,162 +1145,117 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            _getIconForStat(label),
-            color: color,
-            size: 28,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-  
-  IconData _getIconForStat(String stat) {
-    switch (stat) {
-      case 'Peringkat':
-        return Icons.emoji_events;
-      case 'Poin':
-        return Icons.star;
-      case 'Scan':
-        return Icons.camera_alt;
-      default:
-        return Icons.info;
-    }
-  }
-  
-  Widget _buildFeatureCard(
-    BuildContext context,
-    String title,
-    String description,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 2,
+  void _showFinishFoodDialog(BuildContext context, FoodScanModel scan) {
+    final firestoreService = FirestoreService();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              const Icon(Icons.question_mark_rounded, size: 40, color: Colors.black),
+              const Text(
+                'Is it Finished?',
+                style: TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              const SizedBox(height: 10),
+              const Text(
+                'Has this food run out or is there any left?',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+
+                        // Update sebagai selesai tanpa sisa
+                        final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
+                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                        final updatedScan = scan.copyWith(
+                          isDone: true,
+                          isEaten: true,
+                          finishTime: DateTime.now(),
+                        );
+
+                        await foodScanProvider.updateFoodScan(updatedScan);
+
+                        // Trigger generate and save weekly summary
+                        if (authProvider.user != null) {
+                          await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Finish',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+
+                        // Navigate ke FoodWasteScanScreen untuk menggunakan AI perbandingan
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FoodWasteScanScreen(
+                              foodScanId: scan.id,
+                            ),
+                          ),
+                        );
+
+                        // Trigger generate and save weekly summary
+                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                        if (authProvider.user != null) {
+                          await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.auto_awesome, size: 20, color: Colors.white),
+                      label: const Text('Scan Rest'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showFinishFoodDialog(BuildContext context, FoodScanModel scan) {
-    final firestoreService = FirestoreService(); // Add FirestoreService instance
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Makanan Selesai?'),
-        content: const Text('Apakah makanan ini sudah habis atau masih tersisa?'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-
-              // Update sebagai selesai tanpa sisa
-              final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              final updatedScan = scan.copyWith(
-                isDone: true,
-                isEaten: true,
-              );
-
-              await foodScanProvider.updateFoodScan(updatedScan);
-
-              // Trigger generate and save weekly summary
-              if (authProvider.user != null) {
-                await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
-              }
-            },
-            child: const Text('Habis'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-
-              // Navigate ke FoodWasteScanScreen untuk menggunakan AI perbandingan
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FoodWasteScanScreen(
-                    foodScanId: scan.id,
-                  ),
-                ),
-              );
-
-              // Trigger generate and save weekly summary
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              if (authProvider.user != null) {
-                await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Scan dengan AI'),
-          ),
-        ],
       ),
     );
   }
@@ -1459,6 +1267,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return scan.foodItems.fold(0.0, (sum, item) => sum + item.weight);
   }
   
+  String _formatDuration(Duration duration) {
+    if (duration.inHours < 1) {
+      return '${duration.inMinutes} min';
+    } else if (duration.inHours == 1) {
+      return '1 hour';
+    } else {
+      return '${duration.inHours} hours';
+    }
+  }
+
   void _showAnalysisDetails(FoodScanModel scan) {
     // Jika tidak ada AI Remaining Percentage, berarti tidak ada analisis AI
     if (scan.aiRemainingPercentage == null) {

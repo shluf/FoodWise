@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/food_scan_provider.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,15 +16,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _usernameController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
-  String _selectedGender = 'Laki-laki';
+  DateTime? _dateOfBirth;
+  String _selectedGender = 'Male';
   
-  bool _isEditing = false;
   
   @override
   void initState() {
     super.initState();
     
-    // Isi form dengan data user saat ini
+    // Fill form with current user data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user != null) {
@@ -34,6 +34,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         if (user.bodyHeight != null) {
           _heightController.text = user.bodyHeight.toString();
+        }
+        if (user.dateOfBirth != null) {
+          _dateOfBirth = user.dateOfBirth;
         }
         if (user.gender != null) {
           _selectedGender = user.gender!;
@@ -66,6 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bodyHeight: _heightController.text.isNotEmpty 
           ? double.parse(_heightController.text) 
           : null,
+      dateOfBirth: _dateOfBirth,
       gender: _selectedGender,
     );
     
@@ -74,14 +78,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil berhasil diperbarui')),
+          const SnackBar(content: Text('Profile successfully updated')),
         );
         setState(() {
-          _isEditing = false;
         });
+        Navigator.pop(context); // Close drawer
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authProvider.error ?? 'Gagal memperbarui profil')),
+          SnackBar(content: Text(authProvider.error ?? 'Failed to update profile')),
         );
       }
     }
@@ -90,22 +94,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _confirmDeleteAccount() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Akun'),
-        content: const Text(
-          'Apakah Anda yakin ingin menghapus akun? Tindakan ini tidak dapat dibatalkan dan semua data Anda akan dihapus permanen.',
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Delete Account?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Are you sure you want to permanently delete your account?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus Akun'),
-          ),
-        ],
       ),
     );
     
@@ -116,239 +168,391 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         if (!success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(authProvider.error ?? 'Gagal menghapus akun')),
+            SnackBar(content: Text(authProvider.error ?? 'Failed to delete account')),
           );
         }
       }
     }
   }
   
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    
+    if (picked != null && picked != _dateOfBirth) {
+      setState(() {
+        _dateOfBirth = picked;
+      });
+      _updateProfile();
+    }
+  }
+  
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out of your account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
+      }
+    }
+  }
+  
+  void _showEditDrawer(String field) {
+    String title = '';
+    Widget content = Container();
+    
+    switch (field) {
+      case 'username':
+        title = 'Edit Username';
+        content = TextFormField(
+          controller: _usernameController,
+          decoration: const InputDecoration(
+            labelText: 'Username',
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Username cannot be empty';
+            }
+            return null;
+          },
+        );
+        break;
+      case 'weight':
+        title = 'Edit Weight';
+        content = TextFormField(
+          controller: _weightController,
+          decoration: const InputDecoration(
+            labelText: 'Weight (kg)',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value != null && value.isNotEmpty) {
+              final weight = double.tryParse(value);
+              if (weight == null) {
+                return 'Invalid format';
+              }
+              if (weight <= 0) {
+                return 'Weight must be > 0';
+              }
+            }
+            return null;
+          },
+        );
+        break;
+      case 'height':
+        title = 'Edit Height';
+        content = TextFormField(
+          controller: _heightController,
+          decoration: const InputDecoration(
+            labelText: 'Height (cm)',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value != null && value.isNotEmpty) {
+              final height = double.tryParse(value);
+              if (height == null) {
+                return 'Invalid format';
+              }
+              if (height <= 0) {
+                return 'Height must be > 0';
+              }
+            }
+            return null;
+          },
+        );
+        break;
+      case 'gender':
+        title = 'Edit Gender';
+        content = DropdownButtonFormField<String>(
+          value: _selectedGender,
+          decoration: const InputDecoration(
+            labelText: 'Gender',
+            border: OutlineInputBorder(),
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: 'Male',
+              child: Text('Male'),
+            ),
+            DropdownMenuItem(
+              value: 'Female',
+              child: Text('Female'),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedGender = value;
+              });
+            }
+          },
+        );
+        break;
+      case 'dateOfBirth':
+        title = 'Edit Date of Birth';
+        content = InkWell(
+          onTap: () => _selectDate(context),
+          child: InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Date of Birth',
+              border: OutlineInputBorder(),
+            ),
+            child: Text(
+              _dateOfBirth != null 
+                  ? DateFormat('dd/MM/yyyy').format(_dateOfBirth!)
+                  : 'Select Date',
+            ),
+          ),
+        );
+        break;
+    }
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                content,
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _updateProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Save'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
     final user = authProvider.user;
     
     if (user == null) {
       return const Scaffold(
         body: Center(
-          child: Text('User tidak ditemukan'),
+          child: Text('User not found'),
         ),
       );
     }
     
     return Scaffold(
-      appBar: null,
-      backgroundColor: Colors.transparent, // Buat latar belakang transparan
-
-      body: SafeArea( // Tambahkan SafeArea di sini
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.grey[50],
+        elevation: 0,
+        leading: Container(
+          margin: const EdgeInsets.only(left: 12, top: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User photo & basic info
+              // Profile photo
               Center(
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: user.photoURL.isNotEmpty
-                          ? NetworkImage(user.photoURL)
-                          : null,
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(20),
+                        image: user.photoURL.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(user.photoURL),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
                       child: user.photoURL.isEmpty
                           ? const Icon(Icons.person, size: 50)
                           : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Text(
                       user.username,
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       user.email,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
               ),
-              
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 16),
-              
-              // Statistik Pengguna
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Statistik Anda',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildStatItem(
-                            'Total Scan',
-                            '${foodScanProvider.foodScans.length}',
-                            Icons.image_search,
-                            Colors.blue,
-                          ),
-                          _buildStatItem(
-                            'Food Waste',
-                            '${foodScanProvider.totalWaste.toStringAsFixed(1)} g',
-                            Icons.delete_outline,
-                            Colors.red,
-                          ),
-                          _buildStatItem(
-                            'CO2 Saved',
-                            '${foodScanProvider.totalCarbonSaved.toStringAsFixed(1)} kg',
-                            Icons.eco,
-                            Colors.green,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                
+              const SizedBox(height: 32),
+                
+              const Text(
+                'Personal Details',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
+              const SizedBox(height: 16),
               
-              const SizedBox(height: 24),
-              
-              // Profile details form
-              Form(
-                key: _formKey,
+              // Personal details card
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Detail Profil',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
                     // Username
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Pengguna',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      readOnly: !_isEditing,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Nama pengguna tidak boleh kosong';
-                        }
-                        return null;
-                      },
+                    _buildDetailRow(
+                      'Username', 
+                      user.username,
+                      onTap: () => _showEditDrawer('username'),
                     ),
-                    const SizedBox(height: 16),
+                    const Divider(color: Colors.grey),
+                    
+                    // Weight
+                    _buildDetailRow(
+                      'Current weight', 
+                      user.bodyWeight != null ? '${user.bodyWeight!.toInt()} kg' : '-- kg',
+                      onTap: () => _showEditDrawer('weight'),
+                    ),
+                    const Divider(color: Colors.grey),
+                    
+                    // Height
+                    _buildDetailRow(
+                      'Height', 
+                      user.bodyHeight != null ? '${user.bodyHeight!.toInt()} cm' : '-- cm',
+                      onTap: () => _showEditDrawer('height'),
+                    ),
+                    const Divider(color: Colors.grey),
+                    
+                    // Date of birth
+                    _buildDetailRow(
+                      'Date of birth', 
+                      user.dateOfBirth != null 
+                          ? DateFormat('dd/MM/yyyy').format(user.dateOfBirth!)
+                          : 'DD/MM/YYYY',
+                      onTap: () => _showEditDrawer('dateOfBirth'),
+                    ),
+                    const Divider(color: Colors.grey),
                     
                     // Gender
-                    DropdownButtonFormField<String>(
-                      value: _selectedGender,
-                      decoration: const InputDecoration(
-                        labelText: 'Jenis Kelamin',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.wc),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Laki-laki',
-                          child: Text('Laki-laki'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Perempuan',
-                          child: Text('Perempuan'),
-                        ),
-                      ],
-                      onChanged: _isEditing
-                          ? (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedGender = value;
-                                });
-                              }
-                            }
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Body weight and height
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _weightController,
-                            decoration: const InputDecoration(
-                              labelText: 'Berat Badan (kg)',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.monitor_weight),
-                            ),
-                            keyboardType: TextInputType.number,
-                            readOnly: !_isEditing,
-                            validator: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                final weight = double.tryParse(value);
-                                if (weight == null) {
-                                  return 'Format tidak valid';
-                                }
-                                if (weight <= 0) {
-                                  return 'Berat harus > 0';
-                                }
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _heightController,
-                            decoration: const InputDecoration(
-                              labelText: 'Tinggi Badan (cm)',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.height),
-                            ),
-                            keyboardType: TextInputType.number,
-                            readOnly: !_isEditing,
-                            validator: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                final height = double.tryParse(value);
-                                if (height == null) {
-                                  return 'Format tidak valid';
-                                }
-                                if (height <= 0) {
-                                  return 'Tinggi harus > 0';
-                                }
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
+                    _buildDetailRow(
+                      'Gender', 
+                      user.gender == 'Male' ? 'Male' : 'Female',
+                      onTap: () => _showEditDrawer('gender'),
                     ),
                   ],
                 ),
@@ -356,91 +560,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
               
               const SizedBox(height: 32),
               
-              // Logout button
-              Container(
+              // Logout Button
+              SizedBox(
                 width: double.infinity,
-                margin: const EdgeInsets.symmetric(vertical: 16),
                 child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Keluar'),
-                        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Batal'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Keluar'),
-                          ),
-                        ],
-                      ),
-                    );
-                    
-                    if (confirm == true) {
-                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                      await authProvider.signOut();
-                      if (mounted) {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/login',
-                          (route) => false,
-                        );
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Keluar dari Akun'),
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text('Logout'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
               
-              // Danger zone
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Zona Bahaya',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
+              const SizedBox(height: 16),
+              
+              // Delete Account button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _confirmDeleteAccount,
+                  icon: const Icon(Icons.delete_forever, color: Colors.red),
+                  label: const Text('Delete Account'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Tindakan di bawah ini tidak dapat dibatalkan. Harap berhati-hati sebelum melanjutkan.',
-                      style: TextStyle(
-                        color: Colors.red,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.delete_forever),
-                        label: const Text('Hapus Akun'),
-                        onPressed: _confirmDeleteAccount,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -450,37 +604,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
   
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+  Widget _buildDetailRow(String label, String value, {required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 28,
+          Row(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onTap,
+                child: const Icon(
+                  Icons.edit,
+                  size: 18,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

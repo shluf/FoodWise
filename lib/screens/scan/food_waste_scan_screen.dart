@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
+import '../../widgets/camera_overlay_widget.dart';
 import '../../widgets/food_comparison_result_widget.dart';
-import '../../widgets/food_scan_camera_widget.dart';
 
 class FoodWasteScanScreen extends StatefulWidget {
   final String foodScanId;
@@ -20,6 +20,7 @@ class FoodWasteScanScreen extends StatefulWidget {
 
 class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
   String? _previousImagePath;
+  String? _previousImageUrl;
   bool _isLoading = true;
   bool _isAnalyzing = false;
   bool _analysisComplete = false;
@@ -48,13 +49,20 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
         orElse: () => throw Exception('Food scan not found'),
       );
       
-      final imagePath = await provider.getOverlayImagePath(widget.foodScanId);
+      // Set URL gambar dari Firestore untuk overlay
+      setState(() {
+        _previousImageUrl = _foodScan?.imageUrl;
+        _isLoading = false;
+      });
       
-      if (mounted) {
-        setState(() {
-          _previousImagePath = imagePath;
-          _isLoading = false;
-        });
+      // Cadangan: Jika ada masalah dengan URL, load gambar lokal
+      if (_previousImageUrl == null || _previousImageUrl!.isEmpty) {
+        final imagePath = await provider.getOverlayImagePath(widget.foodScanId);
+        if (mounted) {
+          setState(() {
+            _previousImagePath = imagePath;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -114,15 +122,21 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
     if (_capturedImage == null || _scanResult == null || !mounted) return;
     
     final provider = Provider.of<FoodScanProvider>(context, listen: false);
+    final updatedFoodScan = provider.foodScans.firstWhere(
+      (scan) => scan.id == _foodScan!.id, 
+      orElse: () => _foodScan!
+    );
     
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => FoodComparisonResultWidget(
-          foodScan: provider.foodScans.firstWhere((scan) => scan.id == _foodScan!.id),
+          foodScan: updatedFoodScan,
           remainingPercentage: _scanResult!['remainingPercentage'],
           confidence: _scanResult!['confidence'],
           beforeImageFile: _previousImagePath != null ? File(_previousImagePath!) : null,
           afterImageFile: _capturedImage,
+          beforeImageUrl: _previousImageUrl,
+          afterImageUrl: updatedFoodScan.afterImageUrl,
         ),
       ),
     );
@@ -131,11 +145,8 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Loading...'),
-        ),
-        body: const Center(
+      return const Scaffold(
+        body: Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -143,9 +154,6 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
     
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -177,27 +185,103 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
     
     // Show analysis screen when analyzing
     if (_isAnalyzing) {
-      return const Scaffold(
-        body: AnalyzingFoodWidget(),
+      return Scaffold(
+        body: Container(
+          color: Colors.white,
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.camera_alt,
+                  size: 80,
+                  color: Colors.black,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'AI still analyzing your food',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
     // Show success screen when analysis is complete
     if (_analysisComplete) {
       return Scaffold(
-        body: AnalysisCompleteWidget(
-          onDonePressed: _showResults,
+        body: Container(
+          color: Colors.white,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Great!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Your food has been analyzed',
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 50,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: 200,
+                  child: TextButton(
+                    onPressed: _showResults,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
     
     // Show camera with overlay
-    return Scaffold(
-      body: FoodScanCameraWidget(
-        previousImagePath: _previousImagePath,
-        onImageCaptured: _handleImageCaptured,
-        showSwitchCameraButton: false,
-      ),
+    return CameraWithOverlayScreen(
+      previousImagePath: _previousImagePath,
+      previousImageUrl: _previousImageUrl,
+      onImageCaptured: _handleImageCaptured,
     );
   }
 } 
