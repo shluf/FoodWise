@@ -334,9 +334,9 @@ class _QuestScreenState extends State<QuestScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: const Center(
+                    child: const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(
                         child: Text(
                           'No ongoing challenges.',
                           style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),

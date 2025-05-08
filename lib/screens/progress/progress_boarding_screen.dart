@@ -74,13 +74,13 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     }
 
     if (_weeklySummary == null) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center, 
             crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
-              const Text('No weekly summary data available.'),
+              Text('No weekly summary data available.'),
             ],
           ),
         ),
@@ -254,7 +254,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                             interval: 200, // Fixed interval of 200 grams
                                           ),
                                         ),
-                                        rightTitles: AxisTitles(
+                                        rightTitles: const AxisTitles(
                                           sideTitles: SideTitles(showTitles: false), // Remove Y-axis on the right
                                         ),
                                         bottomTitles: AxisTitles(
@@ -274,7 +274,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                           ),
                                         ),
                                       ),
-                                      gridData: FlGridData(show: true),
+                                      gridData: const FlGridData(show: true),
                                       borderData: FlBorderData(show: false),
                                       barGroups: List.generate(7, (index) {
                                         final isToday = index == DateTime.now().weekday - 1; // Check if today
@@ -284,7 +284,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                             BarChartRodData(
                                               fromY: 0,
                                               toY: weeklyWasteMap[index]?.toDouble() ?? 0.0,
-                                              color: isToday ? Color(0xFF070707) : Color(0xFF226CE0), // Different color for today
+                                              color: isToday ? const Color(0xFF070707) : const Color(0xFF226CE0), // Different color for today
                                               width: 24, // Thicker bar graph
                                               borderRadius: BorderRadius.circular(4),
                                             ),
@@ -368,7 +368,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
                                         ),
                                         child: SizedBox(
@@ -400,7 +400,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
                                         ),
                                         child: SizedBox(
@@ -432,7 +432,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                     children: [
                                       Text(
                                           "Let's aim to reduce that",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             fontStyle: FontStyle.italic, 
@@ -723,11 +723,11 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
             ),
             Text(
               '${value.toStringAsFixed(1)} g',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Inter',
-                color: const Color.fromARGB(255, 92, 40, 57),
+                color: Color.fromARGB(255, 92, 40, 57),
               ),
             ),
           ],
@@ -828,10 +828,10 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Color(0xFFE57373).withOpacity(0.2),
+              color: const Color(0xFFE57373).withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.fastfood_outlined,
               color: Color(0xFFE57373),
               size: 24,
@@ -864,7 +864,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
           ),
           Text(
             weight,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               fontFamily: 'Inter',
@@ -880,9 +880,9 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF81C784).withOpacity(0.1),
+        color: const Color(0xFF81C784).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFF81C784).withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFF81C784).withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -902,7 +902,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   Icons.check_circle,
                   color: Color(0xFF81C784),
                   size: 16,
@@ -942,13 +942,13 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   Color _getCategoryColor(String category) {
     switch (category) {
       case 'Karbohidrat':
-        return Color(0xFFFFB74D); // Orange
+        return const Color(0xFFFFB74D); // Orange
       case 'Protein':
-        return Color(0xFF64B5F6); // Blue
+        return const Color(0xFF64B5F6); // Blue
       case 'Sayuran':
-        return Color(0xFF81C784); // Green
+        return const Color(0xFF81C784); // Green
       default:
-        return Color(0xFF9575CD); // Purple
+        return const Color(0xFF9575CD); // Purple
     }
   }
 
@@ -1035,7 +1035,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 
   Widget _buildMealTimeCharts(List<dynamic> foodWasteByMealTime) {
-    final colors = [Color(0xFF000000), Color(0xFF000000), Color(0xFF000000)];
+    final colors = [const Color(0xFF000000), const Color(0xFF000000), const Color(0xFF000000)];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1066,7 +1066,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                         ),
                       ),
                       PieChartSectionData(
-                        color: Color(0xFF226CE0),
+                        color: const Color(0xFF226CE0),
                         value: 100 - percentage,
                         title: '',
                         radius: 40,

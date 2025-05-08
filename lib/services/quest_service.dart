@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:developer'; // For logging debug messages
+// For logging debug messages
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 
-import '../models/quest_model.dart';
 
 class QuestService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

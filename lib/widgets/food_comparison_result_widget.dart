@@ -389,7 +389,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
               value: remainingPercent / 100,
               minHeight: 8,
               backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.black),
             ),
           ),
           

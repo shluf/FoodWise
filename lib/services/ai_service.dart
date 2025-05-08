@@ -230,13 +230,13 @@ class AIService {
       final weight = userData['bodyWeight'] ?? 0;
       
       // Kategorisasi waktu makan berdasarkan scanTime
-      final categorizeTime = (DateTime time) {
+      categorizeTime(DateTime time) {
         final hour = time.hour;
         if (hour >= 5 && hour < 11) return 'Breakfast';
         if (hour >= 11 && hour < 15) return 'Lunch';
         if (hour >= 15 && hour < 19) return 'Snack';
         return 'Dinner';
-      };
+      }
 
       // Hitung hari dalam seminggu
       final Map<String, double> wasteByDay = {
@@ -269,7 +269,7 @@ class AIService {
       };
 
       // Helper function untuk mendapatkan nama hari dari weekday
-      String _getDayName(int weekday) {
+      String getDayName(int weekday) {
         switch (weekday) {
           case 1: return 'Monday';
           case 2: return 'Tuesday';
@@ -294,13 +294,13 @@ class AIService {
         }
         
         final mealTime = categorizeTime(scanTime);
-        final dayName = _getDayName(scanTime.weekday);
+        final dayName = getDayName(scanTime.weekday);
         
         double totalWasteForThisMeal = 0.0;
         double totalWeightForThisMeal = 0.0;
         
         // Periksa apakah foodItems ada dan valid
-        if (scan.foodItems == null || scan.foodItems.isEmpty) {
+        if (scan.foodItems.isEmpty) {
           print('No food items in this scan');
           continue;
         }
@@ -308,7 +308,7 @@ class AIService {
         // Periksa item makanan
         for (final item in scan.foodItems) {
           // Skip jika item name kosong
-          if (item.itemName == null || item.itemName.trim().isEmpty) {
+          if (item.itemName.trim().isEmpty) {
             continue;
           }
           

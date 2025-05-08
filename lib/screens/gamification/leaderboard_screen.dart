@@ -15,6 +15,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   late final String _currentUserId;
   final ScrollController _scrollController = ScrollController();
 
+  @override
   void initState() {
     super.initState();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -266,7 +267,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(
+                const Icon(
                   Icons.monetization_on,
                   color: Colors.amber,
                   size: 16,

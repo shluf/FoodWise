@@ -394,7 +394,7 @@ Future<void> claimQuest(String userId, String questTitle) async {
 
       await for (final snapshot in foodScansStream) {
         final foodScans = snapshot.docs.map((doc) {
-          return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+          return FoodScanModel.fromMap(doc.data(), doc.id);
         }).toList();
 
 
@@ -452,7 +452,7 @@ Future<void> claimQuest(String userId, String questTitle) async {
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
     for (var scan in foodScans) {
-      if (scan.scanTime == null || scan.scanTime.isBefore(startOfWeek)) continue;
+      if (scan.scanTime.isBefore(startOfWeek)) continue;
 
       final dayName = _getDayName(scan.scanTime.weekday);
       final mealTime = _categorizeMealTime(scan.scanTime);
@@ -460,34 +460,32 @@ Future<void> claimQuest(String userId, String questTitle) async {
       double mealTotalWeight = 0.0;
       double mealWasteWeight = 0.0;
 
-      if (scan.foodItems != null) {
-        for (var item in scan.foodItems!) {
-          // Validasi null untuk item.itemName dan item.weight
-          if (item.itemName == null || item.itemName!.isEmpty || item.weight == null) continue;
+      for (var item in scan.foodItems!) {
+        // Validasi null untuk item.itemName dan item.weight
+        if (item.itemName == null || item.itemName!.isEmpty || item.weight == null) continue;
 
-          final remainingWeight = item.remainingWeight ?? 0.0;
-          final weight = item.weight!;
+        final remainingWeight = item.remainingWeight ?? 0.0;
+        final weight = item.weight!;
 
-          mealTotalWeight += weight;
-          mealWasteWeight += remainingWeight;
+        mealTotalWeight += weight;
+        mealWasteWeight += remainingWeight;
 
-          // Validasi null untuk kategori
-          final category = _categorizeByAI(item.itemName!);
-          if (categoryWaste.containsKey(category)) {
-            categoryWaste[category] = categoryWaste[category]! + remainingWeight;
-          }
+        // Validasi null untuk kategori
+        final category = _categorizeByAI(item.itemName!);
+        if (categoryWaste.containsKey(category)) {
+          categoryWaste[category] = categoryWaste[category]! + remainingWeight;
+        }
 
-          // Track top wasted items
-          itemWasteWeight[item.itemName!] = (itemWasteWeight[item.itemName!] ?? 0.0) + remainingWeight;
-          itemOccurrences[item.itemName!] = (itemOccurrences[item.itemName!] ?? 0) + 1;
+        // Track top wasted items
+        itemWasteWeight[item.itemName!] = (itemWasteWeight[item.itemName!] ?? 0.0) + remainingWeight;
+        itemOccurrences[item.itemName!] = (itemOccurrences[item.itemName!] ?? 0) + 1;
 
-          // Track most finished items
-          if (remainingWeight == 0) {
-            finishedItemCount[item.itemName!] = (finishedItemCount[item.itemName!] ?? 0) + 1;
-          }
+        // Track most finished items
+        if (remainingWeight == 0) {
+          finishedItemCount[item.itemName!] = (finishedItemCount[item.itemName!] ?? 0) + 1;
         }
       }
-
+    
       // Track waste by day
       wasteByDay[dayName] = (wasteByDay[dayName] ?? 0.0) + mealWasteWeight;
 

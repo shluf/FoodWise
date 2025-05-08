@@ -234,19 +234,19 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
             currentStep: _currentStep,
             steps: [
               Step(
-                title: Text('Selamat Datang'),
+                title: const Text('Selamat Datang'),
                 content: _buildWelcomeStep(),
               ),
               Step(
-                title: Text('Tanggal Lahir'),
+                title: const Text('Tanggal Lahir'),
                 content: _buildDateOfBirthStep(),
               ),
               Step(
-                title: Text('Jenis Kelamin'),
+                title: const Text('Jenis Kelamin'),
                 content: _buildGenderStep(),
               ),
               Step(
-                title: Text('Ukuran Tubuh'),
+                title: const Text('Ukuran Tubuh'),
                 content: _buildBodyMeasurementsStep(),
               ),
             ],

@@ -58,10 +58,9 @@ class MyApp extends StatelessWidget {
           primary: Color(0xFF070707),
           secondary: Color(0xFFD9DDE0),
           surface: Color(0xFFFFFFFF),
-          background: Color(0xFFF5F5F5),
           error: AppColors.errorColor,
         ),
-        scaffoldBackgroundColor: Color(0xFFF5F5F5),
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
         fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF070707),
@@ -70,7 +69,7 @@ class MyApp extends StatelessWidget {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFF070707),
+        backgroundColor: const Color(0xFF070707),
         foregroundColor: AppColors.textLight,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
         shape: RoundedRectangleBorder(
@@ -81,7 +80,7 @@ class MyApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-        foregroundColor: Color(0xFF070707),
+        foregroundColor: const Color(0xFF070707),
         side: const BorderSide(color: Color(0xFF070707)),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
         shape: RoundedRectangleBorder(
@@ -91,11 +90,11 @@ class MyApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-        foregroundColor: Color(0xFF070707),
+        foregroundColor: const Color(0xFF070707),
           ),
         ),
         cardTheme: CardTheme(
-          color: Color(0xFFFFFFFF),
+          color: const Color(0xFFFFFFFF),
           elevation: 2,
           shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

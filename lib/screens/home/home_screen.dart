@@ -46,8 +46,8 @@ class DashedCircleBorderPainter extends CustomPainter {
     final Offset center = Offset(size.width / 2, size.height / 2);
     
     // Menghitung jumlah dash
-    final double dashLength = 3;
-    final double gapLength = 3;
+    const double dashLength = 3;
+    const double gapLength = 3;
     final double dashCount = (2 * math.pi * radius) / (dashLength + gapLength) + 1;
     
     // Membuat dash

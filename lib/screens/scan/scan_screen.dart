@@ -38,7 +38,7 @@ class CornerPainter extends CustomPainter {
       paint,
     );
     canvas.drawLine(
-      Offset(0, 0),
+      const Offset(0, 0),
       Offset(cornerLength, 0),
       paint,
     );
