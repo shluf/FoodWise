@@ -261,26 +261,33 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
             ),
           ),
-          SizedBox(
-            width: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Icon(
-                  Icons.monetization_on,
-                  color: Colors.amber,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '$points',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                    color: isCurrentUser ? Theme.of(context).primaryColor : Colors.black,
+          Container(
+            margin: const EdgeInsets.only(right: 10.0),
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible( // Ensure the content adjusts dynamically
+                    child: Icon(
+                      Icons.monetization_on,
+                      color: Colors.amber,
+                      size: 16,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Flexible( // Ensure the text adjusts dynamically
+                    child: Text(
+                      '$points',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
+                        color: isCurrentUser ? Theme.of(context).primaryColor : Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
