@@ -15,6 +15,7 @@ import 'screens/home/home_screen.dart';
 import 'screens/onboarding/profile_onboarding_screen.dart';
 import 'screens/scan/scan_screen.dart';
 import 'utils/app_colors.dart';
+import 'services/firestore_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,7 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (_) => GamificationProvider()),
+        Provider<FirestoreService>(create: (_) => FirestoreService()),
       ],
       child: const MyApp(),
     ),
@@ -134,7 +136,15 @@ class MyApp extends StatelessWidget {
         Locale('en', 'US'),
       ],
       locale: const Locale('id', 'ID'),
-      home: const AuthWrapper(),
+      home: FutureBuilder(
+        future: _initializeApp(context),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator(); // Show loading indicator
+          }
+          return const AuthWrapper();
+        },
+      ),
       routes: {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
@@ -144,6 +154,17 @@ class MyApp extends StatelessWidget {
       },
       debugShowCheckedModeBanner: false,
     );
+  }
+
+  Future<void> _initializeApp(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
+
+    // Ensure user is loaded before initializing quests
+    await authProvider.loadUser(); // Load user data if not already loaded
+    if (authProvider.user != null) {
+      await firestoreService.initializeUserQuests(authProvider.user!.id);
+    }
   }
 }
 

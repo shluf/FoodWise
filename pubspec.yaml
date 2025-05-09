@@ -75,6 +75,7 @@ dependencies:
   http_parser: ^4.1.2
   flutter_dotenv: ^5.2.1
   webview_flutter: ^4.11.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:
@@ -103,6 +104,7 @@ flutter:
     - .env
     - assets/images/
     - lib/utils/food_dummies.json
+    - lib/utils/quests_list.json
     # - assets/icons/
   #   - images/a_dot_ham.jpeg
 

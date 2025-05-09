@@ -22,6 +22,7 @@ import '../../widgets/food_comparison_result_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+import 'dart:async'; // Add this import
 
 // Menambahkan CustomPainter untuk garis putus-putus
 class DashedCircleBorderPainter extends CustomPainter {
@@ -74,35 +75,244 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   Color? _dominantColor;
   DateTime _selectedDate = DateTime.now();
+  final DateTime _firstDay = DateTime.now().subtract(const Duration(days: 6));
+  final DateTime _lastDay = DateTime.now().add(const Duration(days: 1));
+  String? _randomAIInsight; // Add this variable to store random insight
+  int _userPoints = 0;
+  bool _isLoadingPoints = true;
+  StreamSubscription? _pointsSubscription;
+  
+  // Welcome animation controllers
+  late AnimationController _welcomeAnimationController;
+  late Animation<double> _welcomeFadeAnimation;
+  late Animation<Offset> _welcomeSlideAnimation;
+  bool _showWelcome = true;  // Changed from false to true initially
+  bool _mainContentReady = false;  // New flag to control main content visibility
+  String _greeting = "Hello";
+
+  // FAB Pulse animation
+  late AnimationController _fabPulseController;
+  late Animation<double> _fabPulseAnimation;
+
+  // Animation controllers for day circles
+  final List<AnimationController> _dayAnimationControllers = [];
+  final List<Animation<double>> _dayScaleAnimations = [];
+  
+  // Removing the tip carousel related variables and data
 
   @override
   void initState() {
     super.initState();
-    _extractDominantColor();
+    
+    // Initialize welcome animation first
+    _setGreetingByTimeOfDay();
+    
+    // Initialize animation controllers
+    _welcomeAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
 
-    // Validasi sesi
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
-      final gamificationProvider = Provider.of<GamificationProvider>(context, listen: false);
-      final firestoreService = FirestoreService(); // Tambahkan instance FirestoreService
+    // Initialize FAB pulse animation controller
+    _fabPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
 
-      authProvider.validateSession();
+    _fabPulseAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
+      CurvedAnimation(
+        parent: _fabPulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
-      if (authProvider.user != null) {
-        foodScanProvider.loadUserFoodScans(authProvider.user!.id);
-        foodScanProvider.loadWeeklyFoodWaste(authProvider.user!.id);
-        gamificationProvider.loadLeaderboard();
-        gamificationProvider.loadQuests();
-
-        // Trigger generate and save weekly summary
-        await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+    _initializeWelcomeAnimation();
+    
+    // Delay other initializations until welcome animation is complete
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _extractDominantColor();
+      _initializeQuests();
+      _loadRandomAIInsight();
+      _initializeUserPoints();
+      
+      // Initialize animation controllers for day circles
+      for (int i = 0; i < 15; i++) {
+        final controller = AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 300),
+        );
+        
+        final scaleAnimation = Tween<double>(
+          begin: 1.0,
+          end: 1.2,
+        ).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInBack,
+          ),
+        );
+        
+        _dayAnimationControllers.add(controller);
+        _dayScaleAnimations.add(scaleAnimation);
       }
+
+      // Validasi sesi
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
+        final gamificationProvider = Provider.of<GamificationProvider>(context, listen: false);
+        final firestoreService = FirestoreService(); // Tambahkan instance FirestoreService
+
+        authProvider.validateSession();
+
+        if (authProvider.user != null) {
+          foodScanProvider.loadUserFoodScans(authProvider.user!.id);
+          foodScanProvider.loadWeeklyFoodWaste(authProvider.user!.id);
+          gamificationProvider.loadLeaderboard();
+          gamificationProvider.loadQuests();
+
+          // Trigger generate and save weekly summary
+          await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
+        }
+      });
     });
+  }
+
+  // Method to set greeting based on time of day
+  void _setGreetingByTimeOfDay() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      _greeting = "Good Morning";
+    } else if (hour < 17) {
+      _greeting = "Good Afternoon";
+    } else {
+      _greeting = "Good Evening";
+    }
+  }
+
+  // Initialize the welcome animation
+  void _initializeWelcomeAnimation() {
+    _welcomeFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _welcomeAnimationController,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      ),
+    );
+
+    _welcomeSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _welcomeAnimationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Start the animation immediately
+    _welcomeAnimationController.forward().then((_) {
+      // After animation completes, show main content and fade out welcome screen
+      // Reduced the delay from 2 seconds to 0.8 seconds for a faster transition
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _mainContentReady = true;
+          });
+          
+          // Reduced the fade-out delay from 500ms to 300ms
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              setState(() {
+                _showWelcome = false;
+              });
+            }
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    // Dispose all animation controllers
+    for (var controller in _dayAnimationControllers) {
+      controller.dispose();
+    }
+    _pointsSubscription?.cancel(); // Cancel the subscription when the widget is disposed
+    _welcomeAnimationController.dispose();
+    _fabPulseController.dispose(); // Dispose the FAB pulse controller
+    super.dispose();
+  }
+
+  // Add this new method to load a random AI insight
+  Future<void> _loadRandomAIInsight() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    if (authProvider.user != null) {
+      try {
+        final docSnapshot = await firestoreService.getWeeklySummaryStream(authProvider.user!.id).first;
+        final weeklySummary = docSnapshot.data()?['weekly_summary'];
+        
+        if (weeklySummary != null) {
+          final recommendations = weeklySummary['generalUserRecommendations'] as List<dynamic>?;
+          
+          if (recommendations != null && recommendations.isNotEmpty) {
+            final firstRecommendation = recommendations[0];
+            
+            // Combine facts and suggestions into one list
+            final allInsights = <String>[];
+            
+            // Add facts
+            final facts = firstRecommendation['facts'] as Map<String, dynamic>?;
+            if (facts != null) {
+              facts.values.forEach((value) {
+                if (value is String && value.isNotEmpty && value != 'No data') {
+                  allInsights.add(value);
+                }
+              });
+            }
+            
+            // Add suggestions
+            final suggestions = firstRecommendation['suggestions'] as Map<String, dynamic>?;
+            if (suggestions != null) {
+              suggestions.values.forEach((value) {
+                if (value is String && value.isNotEmpty && value != 'No suggestion') {
+                  allInsights.add(value);
+                }
+              });
+            }
+            
+            // Pick a random insight if available
+            if (allInsights.isNotEmpty) {
+              final random = math.Random();
+              setState(() {
+                _randomAIInsight = allInsights[random.nextInt(allInsights.length)];
+              });
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error loading AI insight: $e');
+      }
+    }
+  }
+
+  Future<void> _initializeQuests() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
+
+    if (authProvider.user != null) {
+      await firestoreService.initializeUserQuests(authProvider.user!.id);
+    }
   }
 
   Future<void> _extractDominantColor() async {
@@ -135,6 +345,59 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Add this method to initialize user points
+  void _initializeUserPoints() {
+    final userId = Provider.of<AuthProvider>(context, listen: false).user?.id ?? '';
+    if (userId.isNotEmpty) {
+      _pointsSubscription = FirestoreService().getUserPointsStream(userId).listen((points) {
+        // Only update state if points actually changed
+        if (_userPoints != points) {
+          setState(() {
+            _userPoints = points;
+            _isLoadingPoints = false;
+          });
+        } else if (_isLoadingPoints) {
+          // If points are the same but we're still loading, update loading state
+          setState(() {
+            _isLoadingPoints = false;
+          });
+        }
+      }, onError: (e) {
+        debugPrint('Error loading user points: $e');
+        setState(() {
+          _isLoadingPoints = false;
+        });
+      });
+    } else {
+      setState(() {
+        _isLoadingPoints = false;
+      });
+    }
+  }
+
+  // Add this method to build the user points display
+  Widget _buildUserPointsDisplay(BuildContext context) {
+    if (_isLoadingPoints) {
+      return const Text(
+        '...',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
+      );
+    }
+    
+    return Text(
+      '$_userPoints',
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).primaryColor,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screens = [
@@ -147,161 +410,220 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Gambar latar belakang
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/images/background-pattern.png',
-              width: MediaQuery.of(context).size.width,
-              fit: BoxFit.cover,
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Show main content only when ready
+          if (_mainContentReady)
+            Stack(
               children: [
-                // Header dengan padding
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Gambar latar belakang
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Image.asset(
+                    'assets/images/background-pattern.png',
+                    width: MediaQuery.of(context).size.width,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          // Gambar logo Ahshaka
-                          ClipOval(
-                            child: Image.asset(
-                              'assets/images/logo-ahshaka.png',
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Tulisan "Ahshaka"
-                          Text(
-                            'Ahshaka',
-                            style: GoogleFonts.merriweather(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Ikon piala dan jumlah poin
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(50),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.emoji_events,
-                                color: Colors.amber,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 2),
-                              StreamBuilder<int>(
-                                stream: FirestoreService().getUserPointsStream(
-                                  Provider.of<AuthProvider>(context, listen: false).user?.id ?? '',
+                      // Header dengan padding
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                // Gambar logo Ahshaka
+                                ClipOval(
+                                  child: Image.asset(
+                                    'assets/images/logo-ahshaka.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState == ConnectionState.waiting) {
-                                    return const Text(
-                                      '...',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  }
-                                  if (snapshot.hasError || !snapshot.hasData) {
-                                    return const Text(
-                                      '0',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  }
-                                  final points = snapshot.data!;
-                                  return Text(
-                                    '$points',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  );
-                                },
+                                const SizedBox(width: 12),
+                                // Tulisan "Ahshaka"
+                                Text(
+                                  'Ahshaka',
+                                  style: GoogleFonts.merriweather(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Ikon piala dan jumlah poin
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(50),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.emoji_events,
+                                    color: Colors.amber,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  // Replace the StreamBuilder with a more efficient implementation
+                                  // that only rebuilds when the points actually change
+                                  _buildUserPointsDisplay(context),
+                                ],
+                              ),
+                            ),
+                          )
+                          ],
+                        ),
+                      ),
+                      // Konten utama tanpa padding
+                      Expanded(
+                        child: IndexedStack(
+                          index: _selectedIndex == 2 ? 0 : _selectedIndex,
+                          children: screens,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Konten utama tanpa padding
-                Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex == 2 ? 0 : _selectedIndex,
-                    children: screens,
-                  ),
-                ),
               ],
             ),
-          ),
+
+          // Welcome overlay - always on top
+          if (_showWelcome)
+            AnimatedBuilder(
+              animation: _welcomeAnimationController,
+              builder: (context, child) {
+                return Container(
+                  color: Colors.white,  // Solid background instead of translucent
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: FadeTransition(
+                    opacity: _welcomeFadeAnimation,
+                    child: SlideTransition(
+                      position: _welcomeSlideAnimation,
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 40),
+                            // App logo with bounce animation
+                            TweenAnimationBuilder(
+                              tween: Tween<double>(begin: 0.8, end: 1.0),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.elasticOut,
+                              builder: (context, value, child) {
+                                return Transform.scale(
+                                  scale: value,
+                                  child: Image.asset(
+                                    'assets/images/logo-ahshaka.png',
+                                    width: 120,
+                                    height: 120,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            // Welcome text that slides up
+                            Text(
+                              _greeting,
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF226CE0),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              Provider.of<AuthProvider>(context).user?.username ?? 'Friend',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            const Text(
+                              "Let's reduce food waste together!",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF666666),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
-      floatingActionButton: SizedBox(
+      // Only show bottom navigation and FAB when welcome screen is gone
+      floatingActionButton: !_showWelcome ? SizedBox(
         width: 60, 
         height: 60,
-        child: FloatingActionButton(
-          heroTag: 'home',
-          onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ScanScreen()),
-        );
-          },
-          backgroundColor: Theme.of(context).primaryColor,
-          elevation: 8,
-          shape: const CircleBorder(),
-          child: Center( 
-        child: Image.asset(
-          'assets/images/scan.png',
-          width: 32, // Ukuran gambar ditingkatkan agar proporsional
-          height: 32, // Ukuran gambar ditingkatkan agar proporsional
-          fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+        child: AnimatedBuilder(
+          animation: _fabPulseAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _fabPulseAnimation.value,
+              child: FloatingActionButton(
+                heroTag: 'home',
+                onPressed: () {
+                  // Temporarily stop pulsing when pressed
+                  _fabPulseController.stop();
+                  
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ScanScreen()),
+                  ).then((_) {
+                    // Resume pulsing animation when returning from scan screen
+                    if (mounted) _fabPulseController.repeat(reverse: true);
+                  });
+                },
+                backgroundColor: Theme.of(context).primaryColor,
+                elevation: 8,
+                shape: const CircleBorder(),
+                child: Center( 
+                  child: Image.asset(
+                    'assets/images/scan.png',
+                    width: 32, // Ukuran gambar ditingkatkan agar proporsional
+                    height: 32, // Ukuran gambar ditingkatkan agar proporsional
+                    fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+                  ),
+                ),
+              ),
+            );
+          }
         ),
-          ),
-        ),
-      ),
+      ) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: !_showWelcome ? BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
         color: Colors.white,
@@ -343,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
+      ) : null,
     );
   }
 
@@ -399,56 +721,213 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 16),
               
-              // Greeting section with background and shadow
+              // Creative Greeting Card with AI Insights - Integrated design with softer colors
               Container(
-                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                      spreadRadius: 1,
                     ),
                   ],
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF226CE0), // Primary blue
+                      Color(0xFF3980E9), // Lighter blue
+                      Color(0xFF5295F3), // Even lighter blue
+                    ],
+                    stops: [0.0, 0.6, 1.0],
+                  ),
                 ),
-                
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hi, ${authProvider.user?.username ?? 'User'}!',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    children: [
+                      // Background design elements - softer light circles
+                      Positioned(
+                        top: -20,
+                        right: -20,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _calculateCarbonEmission(foodScanProvider),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -50,
+                        left: -20,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.15),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: Image.asset(
-                        'assets/images/person-on-fire.png',
-                        fit: BoxFit.contain,
+                      
+                      // Main content with integrated design
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // User greeting with AI tag - Integrated
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Avatar/icon - softer color
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Color(0xFF226CE0),
+                                    size: 26,
+                                  ),
+                                ),
+                                
+                                // Greeting and tip content
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Username with AI badge - inline
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${authProvider.user?.username ?? 'Friend'}, ',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontFamily: 'Inter',
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.25),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.lightbulb_outline,
+                                                  color: Colors.white,
+                                                  size: 12,
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  'AI',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      
+                                      // The tip content
+                                      Text(
+                                        _randomAIInsight ?? _calculateCarbonEmission(foodScanProvider),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          height: 1.5,
+                                          color: Colors.white,
+                                          fontFamily: 'Inter',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // Bottom action area
+                            Container(
+                              margin: const EdgeInsets.only(top: 20),
+                              child: Row(
+                                children: [
+                                  // Animated refresh button with softer colors
+                                  GestureDetector(
+                                    onTap: _loadRandomAIInsight,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.15),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.refresh_rounded,
+                                            size: 16,
+                                            color: Color(0xFF226CE0),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            "New Insight",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF226CE0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               
@@ -612,6 +1091,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               
+              const SizedBox(height: 16),
+
               const SizedBox(height: 24),
               
               // Recently logged section - Menampilkan data sesuai tanggal yang dipilih
@@ -984,6 +1465,8 @@ class _HomeScreenState extends State<HomeScreen> {
               
               // Item tanggal (index 1-15 dikonversi ke 0-14 untuk perhitungan tanggal)
               final adjustedIndex = index - 1;
+              final animationController = _dayAnimationControllers[adjustedIndex];
+              final scaleAnimation = _dayScaleAnimations[adjustedIndex];
               final day = today.subtract(Duration(days: 7 - adjustedIndex));
               final isToday = DateUtils.isSameDay(day, today);
               final isSelected = DateUtils.isSameDay(day, _selectedDate);
@@ -996,6 +1479,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: GestureDetector(
                   onTap: () {
+                    // Play the animation when tapped
+                    animationController.forward().then((_) => animationController.reverse());
+                    
                     setState(() {
                       _selectedDate = day;
                     });
@@ -1010,63 +1496,66 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Stack(
-                        children: [
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Stack(
-                              children: [
-                                if (!isSelected && !isToday)
-                                  CustomPaint(
-                                    size: const Size(32, 32),
-                                    painter: DashedCircleBorderPainter(
-                                      color: Colors.grey,
+                      ScaleTransition(
+                        scale: scaleAnimation,
+                        child: Stack(
+                          children: [
+                            SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: Stack(
+                                children: [
+                                  if (!isSelected && !isToday)
+                                    CustomPaint(
+                                      size: const Size(32, 32),
+                                      painter: DashedCircleBorderPainter(
+                                        color: Colors.grey,
+                                      ),
                                     ),
-                                  ),
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                                    border: isToday || isSelected ? Border.all(
-                                      color: isToday 
-                                        ? Theme.of(context).primaryColor 
-                                        : Theme.of(context).primaryColor,
-                                      width: isToday ? 2 : 1,
-                                    ) : null,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      dayAbbr,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected 
-                                          ? Colors.white 
-                                          : (isToday ? Theme.of(context).primaryColor : Colors.black87),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                                      border: isToday || isSelected ? Border.all(
+                                        color: isToday 
+                                          ? Theme.of(context).primaryColor 
+                                          : Theme.of(context).primaryColor,
+                                        width: isToday ? 2 : 1,
+                                      ) : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        dayAbbr,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected 
+                                            ? Colors.white 
+                                            : (isToday ? Theme.of(context).primaryColor : Colors.black87),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (hasScans && !isSelected)
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.green,
-                                ),
+                                ],
                               ),
                             ),
-                        ],
+                            if (hasScans && !isSelected)
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

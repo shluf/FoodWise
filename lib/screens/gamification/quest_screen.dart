@@ -64,7 +64,7 @@ class _QuestScreenState extends State<QuestScreen> {
         setState(() {
           _rawQuests = quests.map((quest) => quest.toMap()).toList();
         });
-        debugPrint('Quests fetched: $_rawQuests'); // Log fetched quests
+        // debugPrint('Quests fetched: $_rawQuests'); 
       } catch (e) {
         debugPrint('Error fetching quests: $e'); // Log errors
       }
@@ -209,12 +209,12 @@ class _QuestScreenState extends State<QuestScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.2),
+                color: Color(0xFF226CE0).withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle,
-                color: Colors.amber,
+                color: Color(0xFF226CE0),
                 size: 32,
               ),
             ),
@@ -246,14 +246,14 @@ class _QuestScreenState extends State<QuestScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.2),
+                color: Colors.amber.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.monetization_on,
-                    color: Colors.green,
+                    color: Color(0xFF070707),
                     size: 20,
                   ),
                   const SizedBox(width: 4),
@@ -262,7 +262,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: Color(0xFF070707),
                     ),
                   ),
                 ],

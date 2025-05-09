@@ -444,6 +444,88 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                   )
                                 ],
                               ),
+                            Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: SizedBox(
+                                        width: 20, 
+                                        height: 20, 
+                                        child: Image.asset(
+                                          'assets/images/fw_gram.png',
+                                          fit: BoxFit.contain, 
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Total food waste: ${totalFoodWaste['totalWeight_gram'] > 0 ? totalFoodWaste['totalWeight_gram'].toStringAsFixed(2) : "0.00"} gram',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'Inter',
+                                          color: Color(0xFF070707),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: SizedBox(
+                                        width: 20, 
+                                        height: 20, 
+                                        child: Image.asset(
+                                          'assets/images/fw_emissions.png',
+                                          fit: BoxFit.contain, 
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Total carbon emissions from food waste: ${totalFoodWaste['totalCarbonEmission_kgCO2'] > 0 ? totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3) : "0.000"} kg',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'Inter',
+                                          color: Color(0xFF070707),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        "Let's aim to reduce that",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          fontStyle: FontStyle.italic, 
+                                          fontFamily: 'Inter',
+                                          color: Color(0xFF070707),
+                                        ),
+                                      ),
+                                  ],
+                                )
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -583,50 +665,171 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
 
                     const SizedBox(height: 24),
                       
-                      // Recommendations Section
-                      // Container(
-                      //   padding: const EdgeInsets.all(20),
-                      //   decoration: BoxDecoration(
-                      //     color: Colors.white,
-                      //     borderRadius: BorderRadius.circular(16),
-                      //     boxShadow: [
-                      //       BoxShadow(
-                      //         color: Colors.grey.withOpacity(0.1),
-                      //         blurRadius: 10,
-                      //         offset: const Offset(0, 4),
-                      //       ),
-                      //     ],
-                      //   ),
-                      //   child: Column(
-                      //     crossAxisAlignment: CrossAxisAlignment.start,
-                      //     children: [
-                      //       const Text(
-                      //         'Recommendations',
-                      //         style: TextStyle(
-                      //           fontSize: 18,
-                      //           fontWeight: FontWeight.w700,
-                      //           fontFamily: 'Inter',
-                      //           color: Color(0xFF070707),
-                      //         ),
-                      //       ),
-                      //       const SizedBox(height: 16),
-                      //       if (recommendations.isEmpty)
-                      //         const Center(
-                      //           child: Text(
-                      //             'Belum ada rekomendasi.',
-                      //             style: TextStyle(fontSize: 14, color: Colors.grey),
-                      //           ),
-                      //         )
-                      //       else
-                      //         _buildRecommendationCard(
-                      //           generalUserRecommendations.isNotEmpty 
-                      //             ? 'Frequent Waste Time: ${generalUserRecommendations[0]['eatingPattern']['frequentWasteTime']}' 
-                      //             : 'Recommendations',
-                      //           recommendations,
-                      //         ),
-                      //     ],
-                      //   ),
-                      // ),
+                    // AI Recommendations Section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Personalized Insights',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Inter',
+                                  color: Color(0xFF070707),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF226CE0).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'AI',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFF226CE0),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (generalUserRecommendations.isEmpty)
+                            const Center(
+                              child: Text(
+                                'Belum ada rekomendasi yang tersedia.',
+                                style: TextStyle(fontSize: 14, color: Colors.grey),
+                              ),
+                            )
+                          else
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Facts Section
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF226CE0).withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.lightbulb_outline,
+                                            color: const Color(0xFF226CE0),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Your Eating Patterns',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
+                                              color: const Color(0xFF226CE0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildFactItem(
+                                        'Breakfast Consistency', 
+                                        generalUserRecommendations[0]['facts']['breakfastConsistency'] ?? 'No data',
+                                        Icons.free_breakfast
+                                      ),
+                                      _buildFactItem(
+                                        'Meal Portion Control', 
+                                        generalUserRecommendations[0]['facts']['mealPortionControl'] ?? 'No data',
+                                        Icons.balance
+                                      ),
+                                      _buildFactItem(
+                                        'Waste Reduction', 
+                                        generalUserRecommendations[0]['facts']['wasteReduction'] ?? 'No data',
+                                        Icons.eco
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Suggestions Section
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF81C784).withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.tips_and_updates_outlined,
+                                            color: const Color(0xFF81C784),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Suggested Improvements',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
+                                              color: const Color(0xFF81C784),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildSuggestionItem(
+                                        'Portion Adjustment',
+                                        generalUserRecommendations[0]['suggestions']['portionAdjustment'] ?? 'No suggestion',
+                                        Icons.restaurant
+                                      ),
+                                      _buildSuggestionItem(
+                                        'Food Type Recommendation',
+                                        generalUserRecommendations[0]['suggestions']['foodTypeRecommendation'] ?? 'No suggestion',
+                                        Icons.eco
+                                      ),
+                                      _buildSuggestionItem(
+                                        'Behavioral Tip',
+                                        generalUserRecommendations[0]['suggestions']['behavioralTip'] ?? 'No suggestion',
+                                        Icons.psychology
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                      
+                    const SizedBox(height: 24),
+                     
                       
                       const SizedBox(height: 24),
 
@@ -1035,54 +1238,97 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 
   Widget _buildMealTimeCharts(List<dynamic> foodWasteByMealTime) {
-    final colors = [const Color(0xFF000000), const Color(0xFF000000), const Color(0xFF000000)];
-
+    final colors = [Color(0xFF000000), Color(0xFF000000), Color(0xFF000000)];
+    
+    // Define default meal times to always show even if data is empty
+    final defaultMealTimes = ['Breakfast', 'Lunch', 'Dinner'];
+    
+    // Create a map of meal times to their percentage values from the data
+    Map<String, double> mealTimePercentages = {};
+    for (var entry in foodWasteByMealTime) {
+      String mealTime = entry['mealTime'] as String;
+      double percentage = double.tryParse(entry['averageRemainingPercentage'].toString()) ?? 0.0;
+      mealTimePercentages[mealTime] = percentage;
+    }
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: foodWasteByMealTime.asMap().entries.map((entry) {
+      children: defaultMealTimes.asMap().entries.map((entry) {
         final index = entry.key;
-        final mealTime = entry.value['mealTime'];
-        final percentage = double.tryParse(entry.value['averageRemainingPercentage'].toString()) ?? 0.0;
+        final mealTime = entry.value;
+        // Use the percentage from data if available, otherwise default to 0.0
+        final percentage = mealTimePercentages[mealTime] ?? 0.0;
 
         return Column(
           children: [
             SizedBox(
-              height: 100, // Ukuran pie chart lebih kecil
+              height: 100,
               width: 100,
-              child: Container(
-                 // Ensure the background is transparent
-                child: PieChart(
-                  PieChartData(
-                    sections: [
-                      PieChartSectionData(
-                        value: percentage,
-                        color: colors[index % colors.length],
-                        title: '${percentage.toStringAsFixed(1)}%',
-                        radius: 40, // Radius lebih kecil
-                        titleStyle: const TextStyle(
-                          fontSize: 10,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // The pie chart (only shown when percentage > 0)
+                  if (percentage > 0)
+                    PieChart(
+                      PieChartData(
+                        sections: [
+                          PieChartSectionData(
+                            value: percentage,
+                            color: colors[index % colors.length],
+                            title: '${percentage.toStringAsFixed(1)}%',
+                            radius: 40,
+                            titleStyle: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            color: const Color(0xFF226CE0),
+                            value: 100 - percentage,
+                            title: '',
+                            radius: 40,
+                          ),
+                        ],
+                        sectionsSpace: 0,
+                        centerSpaceRadius: 0,
+                      ),
+                    ),
+                  // If percentage is 0, show a full blue circle with "0.0%" text overlay
+                  if (percentage == 0)
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF226CE0),
+                      ),
+                    ),
+                  // Always show the text for 0% cases
+                  if (percentage == 0)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '0.0%',
+                        style: TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      PieChartSectionData(
-                        color: const Color(0xFF226CE0),
-                        value: 100 - percentage,
-                        title: '',
-                        radius: 40,
-                      ),
-                    ],
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 0, // Ruang tengah lebih kecil
-                  ),
-                ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
             Text(
               mealTime,
               style: const TextStyle(
-                fontSize: 12, // Ukuran teks lebih kecil
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Inter',
                 color: Colors.grey,
@@ -1091,6 +1337,106 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
           ],
         );
       }).toList(),
+    );
+  }
+
+  // Helper method to build a fact item
+  Widget _buildFactItem(String title, String content, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF226CE0).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF226CE0),
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Inter',
+                    color: Color(0xFF616161),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Inter',
+                    color: Color(0xFF212121),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build a suggestion item
+  Widget _buildSuggestionItem(String title, String content, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF81C784).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF81C784),
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Inter',
+                    color: Color(0xFF616161),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Inter',
+                    color: Color(0xFF212121),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

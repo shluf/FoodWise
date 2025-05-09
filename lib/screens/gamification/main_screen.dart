@@ -10,7 +10,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Ubah nilai awal ke 0 untuk menjadikan Leaderboard default
+  int _currentIndex = 1; // Ubah nilai awal ke 0 untuk menjadikan Leaderboard default
 
   final List<Widget> _screens = [
     const LeaderboardScreen(),
@@ -34,7 +34,6 @@ class _MainScreenState extends State<MainScreen> {
             child: FloatingActionButton(
               onPressed: () {
                 setState(() {
-                  // Toggle antara Leaderboard dan Quest
                   _currentIndex = _currentIndex == 0 ? 1 : 0;
                 });
               },
