@@ -827,4 +827,101 @@ PENTING:
       });
     }
 
+  Future<List<Map<String, dynamic>>> generateRecommendationsUsingAI(Map<String, dynamic> summary) async {
+    try {
+      final summaryJson = json.encode(summary);
+      
+      final prompt = TextPart('''
+Analyze this food waste summary data and provide personalized recommendations for the user.
+Summary data: $summaryJson
+
+Based on this data, create recommendations about:
+1. Facts: Identify 3 most notable eating patterns from the data
+2. Suggestions: Provide 3 specific suggestions to reduce food waste
+
+Provide output ONLY as valid JSON without any markdown, with this structure:
+{
+  "facts": {
+    "breakfastConsistency": "[Analysis about breakfast habits in casual, friendly tone]", 
+    "mealPortionControl": "[Analysis about meal portion control in casual, friendly tone]",
+    "wasteReduction": "[Analysis about food waste reduction in casual, friendly tone]"
+  },
+  "suggestions": {
+    "portionAdjustment": "[Suggestion for portion adjustment in casual, friendly tone]",
+    "foodTypeRecommendation": "[Food type recommendation in casual, friendly tone]",
+    "behavioralTip": "[Behavioral eating tip in casual, friendly tone]"
+  }
+}
+
+Use the available data to make specific and relevant recommendations.
+If data is insufficient, provide reasonable general recommendations.
+Use a casual, friendly tone that feels personal to the user.
+All recommendations must be in English.
+Avoid technical or formal language - make it sound like friendly advice.
+Use positive language and encouragement rather than criticism.
+''');
+
+      print('Sending prompt to Gemini API for recommendations...');
+
+      final response = await _model.generateContent([
+        Content.text(prompt.text)
+      ]);
+
+      final responseText = response.text;
+      print('Gemini API Response for recommendations: $responseText');
+
+      if (responseText != null && responseText.isNotEmpty) {
+        String cleanedResponse = responseText
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+
+        try {
+          Map<String, dynamic> jsonResponse = json.decode(cleanedResponse);
+          
+          if (!jsonResponse.containsKey('facts') || !jsonResponse.containsKey('suggestions')) {
+            throw const FormatException('Format JSON tidak sesuai yang diharapkan');
+          }
+          
+          return [jsonResponse];
+        } catch (e) {
+          print('Error parsing JSON response: $e. Response: $cleanedResponse');
+          
+          // Jika gagal parsing, coba bersihkan response lebih lanjut
+          try {
+            String moreCleanedResponse = cleanedResponse
+                .replaceAll(RegExp(r'^.*?(\{)', dotAll: true), '{')
+                .replaceAll(RegExp(r'(\}).*$', dotAll: true), '}');
+                
+            Map<String, dynamic> jsonResponse = json.decode(moreCleanedResponse);
+            return [jsonResponse];
+          } catch (e2) {
+            print('Gagal parsing JSON setelah pembersihan tambahan: $e2');
+            throw Exception('Gagal memproses respons dari Gemini API');
+          }
+        }
+      } else {
+        throw Exception('Respons dari Gemini API kosong');
+      }
+    } catch (e) {
+      print('Error generating recommendations with Gemini API: $e');
+      
+      // Return default recommendations if AI fails
+      return [
+        {
+          "facts": {
+            "breakfastConsistency": "You are quite consistent with your breakfast habits.",
+            "mealPortionControl": "Your lunch portions are quite balanced.",
+            "wasteReduction": "There is potential to reduce food waste."
+          },
+          "suggestions": {
+            "portionAdjustment": "Try reducing your lunch portions.",
+            "foodTypeRecommendation": "Consider eating more vegetables.",
+            "behavioralTip": "Avoid distractions while eating to enjoy your food more."
+          }
+        }
+      ];
+    }
+  }
+
 }

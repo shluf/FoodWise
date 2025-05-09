@@ -82,12 +82,14 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _selectedDate = DateTime.now();
   final DateTime _firstDay = DateTime.now().subtract(const Duration(days: 6));
   final DateTime _lastDay = DateTime.now().add(const Duration(days: 1));
+  String? _randomAIInsight; // Add this variable to store random insight
 
   @override
   void initState() {
     super.initState();
     _extractDominantColor();
     _initializeQuests();
+    _loadRandomAIInsight(); // Add this to load random insight when screen initializes
 
     // Validasi sesi
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -108,6 +110,60 @@ class _HomeScreenState extends State<HomeScreen> {
         await firestoreService.generateAndSaveWeeklySummary(authProvider.user!.id);
       }
     });
+  }
+
+  // Add this new method to load a random AI insight
+  Future<void> _loadRandomAIInsight() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final firestoreService = FirestoreService();
+
+    if (authProvider.user != null) {
+      try {
+        final docSnapshot = await firestoreService.getWeeklySummaryStream(authProvider.user!.id).first;
+        final weeklySummary = docSnapshot.data()?['weekly_summary'];
+        
+        if (weeklySummary != null) {
+          final recommendations = weeklySummary['generalUserRecommendations'] as List<dynamic>?;
+          
+          if (recommendations != null && recommendations.isNotEmpty) {
+            final firstRecommendation = recommendations[0];
+            
+            // Combine facts and suggestions into one list
+            final allInsights = <String>[];
+            
+            // Add facts
+            final facts = firstRecommendation['facts'] as Map<String, dynamic>?;
+            if (facts != null) {
+              facts.values.forEach((value) {
+                if (value is String && value.isNotEmpty && value != 'No data') {
+                  allInsights.add(value);
+                }
+              });
+            }
+            
+            // Add suggestions
+            final suggestions = firstRecommendation['suggestions'] as Map<String, dynamic>?;
+            if (suggestions != null) {
+              suggestions.values.forEach((value) {
+                if (value is String && value.isNotEmpty && value != 'No suggestion') {
+                  allInsights.add(value);
+                }
+              });
+            }
+            
+            // Pick a random insight if available
+            if (allInsights.isNotEmpty) {
+              final random = math.Random();
+              setState(() {
+                _randomAIInsight = allInsights[random.nextInt(allInsights.length)];
+              });
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error loading AI insight: $e');
+      }
+    }
   }
 
   Future<void> _initializeQuests() async {
@@ -404,56 +460,213 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 16),
               
-              // Greeting section with background and shadow
+              // Creative Greeting Card with AI Insights - Integrated design with softer colors
               Container(
-                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                      spreadRadius: 1,
                     ),
                   ],
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF226CE0), // Primary blue
+                      Color(0xFF3980E9), // Lighter blue
+                      Color(0xFF5295F3), // Even lighter blue
+                    ],
+                    stops: [0.0, 0.6, 1.0],
+                  ),
                 ),
-                
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hi, ${authProvider.user?.username ?? 'User'}!',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    children: [
+                      // Background design elements - softer light circles
+                      Positioned(
+                        top: -20,
+                        right: -20,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _calculateCarbonEmission(foodScanProvider),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -50,
+                        left: -20,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.15),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: Image.asset(
-                        'assets/images/person-on-fire.png',
-                        fit: BoxFit.contain,
+                      
+                      // Main content with integrated design
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // User greeting with AI tag - Integrated
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Avatar/icon - softer color
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  margin: const EdgeInsets.only(right: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Color(0xFF226CE0),
+                                    size: 26,
+                                  ),
+                                ),
+                                
+                                // Greeting and tip content
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Username with AI badge - inline
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${authProvider.user?.username ?? 'Friend'}, ',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontFamily: 'Inter',
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.25),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.lightbulb_outline,
+                                                  color: Colors.white,
+                                                  size: 12,
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  'AI',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      
+                                      // The tip content
+                                      Text(
+                                        _randomAIInsight ?? _calculateCarbonEmission(foodScanProvider),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          height: 1.5,
+                                          color: Colors.white,
+                                          fontFamily: 'Inter',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // Bottom action area
+                            Container(
+                              margin: const EdgeInsets.only(top: 20),
+                              child: Row(
+                                children: [
+                                  // Animated refresh button with softer colors
+                                  GestureDetector(
+                                    onTap: _loadRandomAIInsight,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.15),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.refresh_rounded,
+                                            size: 16,
+                                            color: Color(0xFF226CE0),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            "New Insight",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF226CE0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               

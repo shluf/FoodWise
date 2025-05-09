@@ -7,11 +7,16 @@ import '../models/leaderboard_entry_model.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 
 
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AIService _aiService;
+  
+  FirestoreService({AIService? aiService}) : 
+    _aiService = aiService ?? AIService(dotenv.env['GEMINI_API_KEY']!);
 
   // Food Scans Collection
   // =====================
@@ -433,34 +438,35 @@ Future<void> initializeUserQuests(String userId) async {
 
   Future<void> generateAndSaveWeeklySummary(String userId) async {
     try {
-      // Fetch food scans for the user in real-time
-      final foodScansStream = _firestore
+      // Get the user data for passing to AI
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      
+      // Fetch food scans for the user
+      final snapshot = await _firestore
           .collection('foodScans')
           .where('userId', isEqualTo: userId)
           .where('isDone', isEqualTo: true)
-          .snapshots();
+          .get();
+          
+      final foodScans = snapshot.docs.map((doc) {
+        return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
 
-      await for (final snapshot in foodScansStream) {
-        final foodScans = snapshot.docs.map((doc) {
-          return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-        }).toList();
-
-
-        // Calculate summary data
-        final Map<String, dynamic> summaryData = _calculateSummary(foodScans);
-
-        // debugPrint('Weekly summary data: $summaryData');
-
-        // Save summary to Firestore
-        await saveWeeklySummary(userId, summaryData);
-      }
+      // Calculate summary data with async method
+      final Map<String, dynamic> summaryData = await _calculateSummary(foodScans);
+      
+      // Save summary to Firestore
+      await saveWeeklySummary(userId, summaryData);
     } catch (e) {
       print('Error generating and saving weekly summary: $e');
       rethrow;
     }
   }
 
-  Map<String, dynamic> _calculateSummary(List<FoodScanModel> foodScans) {
+  Future<Map<String, dynamic>> _calculateSummary(List<FoodScanModel> foodScans) async {
+    debugPrint('🔄 FirestoreService: Calculating weekly summary for ${foodScans.length} food scans');
+    
     final Map<String, dynamic> summary = {
       "generalUserRecommendations": [],
       "topWastedFoodItems": [],
@@ -583,9 +589,33 @@ Future<void> initializeUserQuests(String userId) async {
         ..sort((a, b) => (b["finishedCount"] as int).compareTo(a["finishedCount"] as int));
 
     // Add recommendations using AI
-    summary["generalUserRecommendations"] = _generateRecommendationsUsingAI(summary);
+    try {
+      debugPrint('🤖 FirestoreService: Requesting recommendations from AI service');
+      final aiRecommendations = await _aiService.generateRecommendationsUsingAI(summary);
+      debugPrint('✅ FirestoreService: Received AI recommendations: ${json.encode(aiRecommendations)}');
+      summary["generalUserRecommendations"] = aiRecommendations;
+    } catch (e) {
+      debugPrint('❌ FirestoreService: Error generating AI recommendations: $e');
+      // Fallback to hardcoded recommendations if AI fails
+      debugPrint('⚠️ FirestoreService: Using fallback recommendations');
+      summary["generalUserRecommendations"] = [
+        {
+          "facts": {
+            "breakfastConsistency": "Anda tidak pernah melewatkan sarapan, bagus!",
+            "mealPortionControl": "Porsi makan siang Anda cukup seimbang.",
+            "wasteReduction": "Anda telah mengurangi limbah makanan sebesar 15% minggu ini."
+          },
+          "suggestions": {
+            "portionAdjustment": "Kurangi ukuran porsi untuk makan siang.",
+            "foodTypeRecommendation": "Pertimbangkan untuk makan lebih banyak sayuran.",
+            "behavioralTip": "Hindari gangguan saat makan."
+          }
+        }
+      ];
+    }
 
-  
+    debugPrint('📊 FirestoreService: Weekly summary calculation completed');
+    debugPrint('📝 FirestoreService: Final recommendations: ${json.encode(summary["generalUserRecommendations"])}');
 
     return summary;
   }
@@ -606,23 +636,6 @@ Future<void> initializeUserQuests(String userId) async {
     if (itemName.toLowerCase().contains("chicken")) return "Protein";
     if (itemName.toLowerCase().contains("vegetable")) return "Vegetables";
     return "Others";
-  }
-
-  List<Map<String, dynamic>> _generateRecommendationsUsingAI(Map<String, dynamic> summary) {
-    return [
-      {
-        "facts": {
-          "breakfastConsistency": "You never skip breakfast, great job!",
-          "mealPortionControl": "Your lunch portions are well-balanced.",
-          "wasteReduction": "You've reduced food waste by 15% this week."
-        },
-        "suggestions": {
-          "portionAdjustment": "Reduce portion size for lunch.",
-          "foodTypeRecommendation": "Consider eating more vegetables.",
-          "behavioralTip": "Avoid distractions while eating."
-        }
-      }
-    ];
   }
 
   Future<Map<String, dynamic>?> getWeeklySummary(String userId) async {
