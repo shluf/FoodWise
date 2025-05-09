@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/food_scan_model.dart';
 import '../screens/scan/food_waste_scan_screen.dart';
+import '../screens/home/home_screen.dart';
 
 class FoodComparisonResultWidget extends StatelessWidget {
   final FoodScanModel foodScan;
@@ -296,7 +297,11 @@ class FoodComparisonResultWidget extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 shape: RoundedRectangleBorder(

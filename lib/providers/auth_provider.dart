@@ -293,6 +293,38 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
+  Future<bool> resetPassword(String email) async {
+    try {
+      _setLoading(true);
+      _error = null;
+      
+      final result = await _authService.resetPassword(email);
+      if (!result) {
+        _error = 'Gagal mengirim email reset password';
+      }
+      return result;
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'user-not-found':
+          _error = 'Email tidak terdaftar. Silakan buat akun baru.';
+          break;
+        case 'invalid-email':
+          _error = 'Format email tidak valid.';
+          break;
+        default:
+          _error = e.message ?? e.toString();
+      }
+      print('Error sending password reset email: $_error');
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      print('Error sending password reset email: $_error');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+  
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();

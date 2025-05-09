@@ -39,33 +39,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         title: const Text('Scan History'),
         // ===================== TEMPORARY DUMMY BUTTON START =====================
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white, // Button background color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () async {
-                final generator = DummyDataGenerator();
-                await generator.loadAndSaveDummyData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Dummy data uploaded to Firestore')),
-                );
-              },
-              child: const Text(
-                'Generate Dummy',
-                style: TextStyle(
-                  color: Colors.black, // Changed to black
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        //     child: TextButton(
+        //       style: TextButton.styleFrom(
+        //         backgroundColor: Colors.white, // Button background color
+        //         shape: RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.circular(8),
+        //         ),
+        //       ),
+        //       onPressed: () async {
+        //         final generator = DummyDataGenerator();
+        //         await generator.loadAndSaveDummyData();
+        //         ScaffoldMessenger.of(context).showSnackBar(
+        //           const SnackBar(content: Text('Dummy data uploaded to Firestore')),
+        //         );
+        //       },
+        //       child: const Text(
+        //         'Generate Dummy',
+        //         style: TextStyle(
+        //           color: Colors.black, // Changed to black
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ],
         // ===================== TEMPORARY DUMMY BUTTON END =====================
       ),
       body: foodScanProvider.isLoading 

@@ -186,4 +186,14 @@ class AuthService {
       print('Error signing out: $e');
     }
   }
+  
+  Future<bool> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return true;
+    } catch (e) {
+      print('Error sending password reset email: $e');
+      return false;
+    }
+  }
 }

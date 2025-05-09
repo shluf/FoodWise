@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:foodwise/screens/gamification/leaderboard_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
@@ -13,17 +12,16 @@ import '../history/history_screen.dart';
 import '../calendar/calendar_screen.dart';
 import '../scan/scan_screen.dart';
 import '../settings/profile_screen.dart';
-import '../gamification/quest_screen.dart';
 import '../scan/food_waste_scan_screen.dart';
 import '../progress/progress_boarding_screen.dart';
 import '../gamification/main_screen.dart';
+import '../gamification/leaderboard_screen.dart';
 import '../../services/firestore_service.dart';
 import '../../services/ai_service.dart';
 import '../../widgets/food_comparison_result_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Menambahkan CustomPainter untuk garis putus-putus
 class DashedCircleBorderPainter extends CustomPainter {
@@ -80,8 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   Color? _dominantColor;
   DateTime _selectedDate = DateTime.now();
-  final DateTime _firstDay = DateTime.now().subtract(const Duration(days: 6));
-  final DateTime _lastDay = DateTime.now().add(const Duration(days: 1));
 
   @override
   void initState() {
@@ -196,64 +192,73 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       // Ikon piala dan jumlah poin
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8), // Transparansi pada latar belakang
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.emoji_events,
-                              color: Colors.amber,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 4),
-                            StreamBuilder<int>(
-                              stream: FirestoreService().getUserPointsStream(
-                                Provider.of<AuthProvider>(context, listen: false).user?.id ?? '',
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
-                                  return const Text(
-                                    '...',
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.emoji_events,
+                                color: Colors.amber,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 2),
+                              StreamBuilder<int>(
+                                stream: FirestoreService().getUserPointsStream(
+                                  Provider.of<AuthProvider>(context, listen: false).user?.id ?? '',
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const Text(
+                                      '...',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  }
+                                  if (snapshot.hasError || !snapshot.hasData) {
+                                    return const Text(
+                                      '0',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  }
+                                  final points = snapshot.data!;
+                                  return Text(
+                                    '$points',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
+                                      color: Theme.of(context).primaryColor,
                                     ),
                                   );
-                                }
-                                if (snapshot.hasError || !snapshot.hasData) {
-                                  return const Text(
-                                    '0',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
-                                    ),
-                                  );
-                                }
-                                final points = snapshot.data!;
-                                return Text(
-                                  '$points',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -399,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -457,11 +462,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Container(
                       width: 300,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       margin: const EdgeInsets.only(right: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -531,10 +536,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Container(
                       width: 300,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -647,11 +652,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Jika tidak ada data pada tanggal yang dipilih, tampilkan placeholder
                   if (selectedDateScans.isEmpty)
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       height: 150,
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -705,7 +710,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 150,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -718,7 +723,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 ClipRRect(
-                                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                                  borderRadius: const BorderRadius.all(Radius.circular(30)),
                                   child: scan.imageUrl != null 
                                     ? Image.network(
                                         scan.imageUrl!,
@@ -800,34 +805,38 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 color: Colors.grey[600],
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
-                                            
-                                            if (scan.isDone)
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey[200],
-                                                  borderRadius: BorderRadius.circular(12),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    const Icon(Icons.timer, size: 14, color: Colors.black54),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      _formatDuration(scan.finishTime?.difference(scan.scanTime) ?? Duration.zero),
-                                                      style: const TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.w500,
-                                                        color: Colors.black54,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
                                           ],
                                         ),
                                       ),
+                                      
+                                      if (scan.isDone)
+                                        Container(
+                                          padding: const EdgeInsets.only(left: 12, top: 2, right: 12),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              left: BorderSide(
+                                                color: Colors.grey[300]!,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.timer, 
+                                                size: 12, 
+                                                color: Colors.grey[500],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _formatDuration(scan.finishTime?.difference(scan.scanTime) ?? Duration.zero),
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       
                                       // Status jika sudah selesai
                                       if (scan.isDone)
@@ -844,15 +853,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontSize: 12,
                                                 ),
                                               ),
-                                              if (scan.aiRemainingPercentage != null) 
-                                                Text(
-                                                  "Ketuk untuk melihat detail analisis",
-                                                  style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 10,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                                ),
                                             ],
                                           ),
                                         ),
@@ -895,7 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildScrollableDayCircles(BuildContext context, FoodScanProvider foodScanProvider) {
-    final days = ["S", "M", "T", "W", "T", "F", "S"];
+    final days = ["M", "T", "W", "T", "F", "S", "S"];
     final today = DateTime.now();
     
     return Column(
