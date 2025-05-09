@@ -16,6 +16,7 @@ import 'screens/onboarding/profile_onboarding_screen.dart';
 import 'screens/scan/scan_screen.dart';
 import 'utils/app_colors.dart';
 import 'services/firestore_service.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -157,11 +158,22 @@ class MyApp extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final firestoreService = Provider.of<FirestoreService>(context, listen: false);
 
-    // Ensure user is loaded before initializing quests
-    await authProvider.loadUser(); // Load user data if not already loaded
-    if (authProvider.user != null) {
-      await firestoreService.initializeUserQuests(authProvider.user!.id);
-    }
+    final completer = Completer<void>();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await authProvider.loadUser();
+        if (authProvider.user != null) {
+          await firestoreService.initializeUserQuests(authProvider.user!.id);
+        }
+        completer.complete();
+      } catch (e) {
+        print('Error initializing app: $e');
+        completer.completeError(e);
+      }
+    });
+    
+    return completer.future;
   }
 }
 
