@@ -32,12 +32,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProxyProvider<AuthProvider, FoodScanProvider>(
           create: (_) => FoodScanProvider(dotenv.env['GEMINI_API_KEY'] ?? ''),
-          update: (context, authProvider, foodScanProvider) {
-            final userId = authProvider.currentUserId;
-            if (userId != null) {
-              foodScanProvider?.loadUserFoodScans(userId);
-            }
-            return foodScanProvider!;
+          update: (context, auth, scanProvider) {
+            scanProvider!.setUserId(auth.currentUserId);
+            return scanProvider;
           },
         ),
         ChangeNotifierProvider(create: (_) => GamificationProvider()),

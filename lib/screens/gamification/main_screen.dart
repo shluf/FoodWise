@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Buat latar belakang transparan
+      backgroundColor: Colors.transparent,
 
       body: Stack(
         children: [

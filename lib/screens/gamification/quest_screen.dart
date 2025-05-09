@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:palette_generator/palette_generator.dart';
-import 'package:foodwise/widgets/common_header.dart'; // Perbaiki jalur impor
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
-import '../../services/quest_service.dart'; // Import the QuestService class
+import '../../services/quest_service.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/quest_model.dart'; // Import the QuestModel class
+import '../../models/quest_model.dart';
 
 class QuestScreen extends StatefulWidget {
   const QuestScreen({super.key});
@@ -19,7 +18,7 @@ class QuestScreen extends StatefulWidget {
 class _QuestScreenState extends State<QuestScreen> {
   Color? _dominantColor;
   List<Map<String, dynamic>> _rawQuests = [];
-  final QuestService questService = QuestService(); // Ensure QuestService is properly instantiated
+  final QuestService questService = QuestService();
   final firestoreService = FirestoreService();
 
   @override
@@ -32,7 +31,7 @@ class _QuestScreenState extends State<QuestScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     firestoreService.getUserQuestsStream(authProvider.user!.id).listen((quests) {
       for (var quest in quests) {
-        questService.monitorQuestProgress(authProvider.user!.id, quest.id); // Ensure quest.id matches Firestore document ID
+        questService.monitorQuestProgress(authProvider.user!.id, quest.id);
       }
     });
   }
@@ -45,11 +44,10 @@ class _QuestScreenState extends State<QuestScreen> {
       _dominantColor = paletteGenerator.dominantColor?.color ?? Colors.transparent;
     });
 
-    // Atur warna status bar berdasarkan warna dominan
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
-        statusBarColor: _dominantColor, // Gunakan warna dominan
-        statusBarIconBrightness: Brightness.light, // Gunakan ikon terang
+        statusBarColor: _dominantColor,
+        statusBarIconBrightness: Brightness.light,
       ),
     );
   }

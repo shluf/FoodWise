@@ -612,9 +612,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: Center( 
                   child: Image.asset(
                     'assets/images/scan.png',
-                    width: 32, // Ukuran gambar ditingkatkan agar proporsional
-                    height: 32, // Ukuran gambar ditingkatkan agar proporsional
-                    fit: BoxFit.contain, // Pastikan gambar tidak terpotong
+                    width: 32,
+                    height: 32, 
+                    fit: BoxFit.contain, 
                   ),
                 ),
               ),
@@ -628,10 +628,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         notchMargin: 8,
         color: Colors.white,
         elevation: 10,
-        clipBehavior: Clip.antiAlias, // Tambahkan ini untuk mencegah overflow
+        clipBehavior: Clip.antiAlias,
         height: 100,
         child: SizedBox(
-          height: 80, // Tinggi ditingkatkan dari 60 ke 80
+          height: 80,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -639,7 +639,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Flexible( // Tambahkan Flexible untuk mencegah overflow
+                    Flexible(
                       child: _buildNavBarItem(0, Icons.home, 'Home'),
                     ),
                     Flexible(
@@ -682,13 +682,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: [
             Icon(
               icon,
-              size: 30, // Ukuran ikon dikecilkan
+              size: 30,
               color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
             ),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10, // Ukuran font teks dikecilkan
+                fontSize: 10,
                 color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),

@@ -17,6 +17,7 @@ class FoodScanProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   Map<DateTime, double> _weeklyFoodWaste = {};
+  String? userId;
   
   // Statistik total untuk aplikasi
   double _totalWaste = 0.0;
@@ -481,5 +482,16 @@ class FoodScanProvider extends ChangeNotifier {
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
+  }
+
+  void setUserId(String? newUserId) {
+    if (userId != newUserId && newUserId != null) {
+      userId = newUserId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        loadUserFoodScans(newUserId);
+      });
+    } else {
+      userId = newUserId;
+    }
   }
 }
