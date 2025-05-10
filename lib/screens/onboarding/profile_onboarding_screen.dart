@@ -15,7 +15,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
   final _dateController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
-  String _selectedGender = 'Laki-laki';
+  String _selectedGender = 'Male';
   DateTime? _selectedDate;
   
   int _currentStep = 0;
@@ -38,7 +38,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
     if (_formKey.currentState == null) {
       print('DEBUG: _formKey.currentState is null');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan. Silakan coba lagi.')),
+        const SnackBar(content: Text('An error occurred. Please try again.')),
       );
       return;
     }
@@ -57,7 +57,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       
       if (user == null) {
         print('DEBUG: User is null in _saveProfileData');
-        throw Exception('User tidak ditemukan');
+        throw Exception('User not found');
       }
 
       print('DEBUG: Creating updated user with data:');
@@ -79,7 +79,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       print('DEBUG: Update result: $success');
 
       if (!success) {
-        throw Exception('Gagal memperbarui profil: ${authProvider.error}');
+        throw Exception('Failed to update profile: ${authProvider.error}');
       }
 
       if (mounted) {
@@ -96,20 +96,20 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Gagal Menyimpan Data'),
+            title: const Text('Failed to Save Data'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Terjadi kesalahan: ${e.toString()}'),
+                Text('An error occurred: ${e.toString()}'),
                 const SizedBox(height: 16),
-                const Text('Apakah Anda ingin melanjutkan tanpa menyimpan data?'),
+                const Text('Do you want to continue without saving data?'),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Tidak'),
+                child: const Text('No'),
               ),
               FilledButton(
                 onPressed: () {
@@ -119,7 +119,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                     (route) => false,
                   );
                 },
-                child: const Text('Ya, Lanjutkan'),
+                child: const Text('Yes, Continue'),
               ),
             ],
           ),
@@ -165,30 +165,30 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Data Profil'),
+        title: const Text('Confirm Profile Data'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Mohon periksa data Anda sebelum melanjutkan:'),
+            const Text('Please check your data before continuing:'),
             const SizedBox(height: 16),
-            _buildInfoRow('Tanggal Lahir', _dateController.text),
-            _buildInfoRow('Jenis Kelamin', _selectedGender),
-            _buildInfoRow('Berat Badan', '${_weightController.text} kg'),
-            _buildInfoRow('Tinggi Badan', '${_heightController.text} cm'),
+            _buildInfoRow('Date of Birth', _dateController.text),
+            _buildInfoRow('Gender', _selectedGender),
+            _buildInfoRow('Weight', '${_weightController.text} kg'),
+            _buildInfoRow('Height', '${_heightController.text} cm'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Kembali'),
+            child: const Text('Back'),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
               _saveProfileData();
             },
-            child: const Text('Simpan'),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -225,7 +225,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lengkapi Profil'),
+        title: const Text('Complete Profile'),
       ),
       body: SafeArea(
         child: Form(
@@ -234,19 +234,19 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
             currentStep: _currentStep,
             steps: [
               Step(
-                title: const Text('Selamat Datang'),
+                title: const Text('Welcome'),
                 content: _buildWelcomeStep(),
               ),
               Step(
-                title: const Text('Tanggal Lahir'),
+                title: const Text('Date of Birth'),
                 content: _buildDateOfBirthStep(),
               ),
               Step(
-                title: const Text('Jenis Kelamin'),
+                title: const Text('Gender'),
                 content: _buildGenderStep(),
               ),
               Step(
-                title: const Text('Ukuran Tubuh'),
+                title: const Text('Body Measurements'),
                 content: _buildBodyMeasurementsStep(),
               ),
             ],
@@ -266,13 +266,13 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
                               strokeWidth: 2.0,
                             )
                           ) 
-                        : Text(_currentStep == _totalSteps - 1 ? 'Selesai' : 'Lanjut'),
+                        : Text(_currentStep == _totalSteps - 1 ? 'Finish' : 'Next'),
                     ),
                     if (_currentStep > 0) ...[
                       const SizedBox(width: 12),
                       OutlinedButton(
                         onPressed: _isLoading ? null : _previousStep,
-                        child: const Text('Kembali'),
+                        child: const Text('Back'),
                       ),
                     ],
                   ],
@@ -290,7 +290,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Selamat Datang di FoodWise!',
+          'Welcome to FoodWise!',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -298,7 +298,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Untuk memberi Anda pengalaman terbaik, kami perlu mengumpulkan beberapa informasi dasar tentang Anda.',
+          'To give you the best experience, we need to collect some basic information about you.',
           style: TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
@@ -315,7 +315,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         ),
         const SizedBox(height: 24),
         const Text(
-          'Informasi ini membantu kami:',
+          'This information helps us:',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -324,15 +324,15 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         const SizedBox(height: 8),
         _buildInfoItem(
           icon: Icons.eco,
-          text: 'Memperkirakan dampak lingkungan dari penghematan makanan Anda',
+          text: 'Estimate the environmental impact of your food savings',
         ),
         _buildInfoItem(
           icon: Icons.insights,
-          text: 'Memberikan saran yang disesuaikan untuk mengurangi limbah makanan',
+          text: 'Provide tailored suggestions to reduce food waste',
         ),
         _buildInfoItem(
           icon: Icons.health_and_safety,
-          text: 'Menampilkan informasi kesehatan yang relevan',
+          text: 'Display relevant health information',
         ),
       ],
     );
@@ -359,7 +359,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Kapan Tanggal Lahir Anda?',
+          'When is Your Date of Birth?',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -367,23 +367,23 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Informasi ini membantu kami menyediakan rekomendasi yang sesuai dengan usia Anda.',
+          'This information helps us provide recommendations appropriate for your age.',
           style: TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
         TextFormField(
           controller: _dateController,
           decoration: const InputDecoration(
-            labelText: 'Tanggal Lahir',
+            labelText: 'Date of Birth',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.calendar_today),
-            hintText: 'Pilih tanggal lahir Anda',
+            hintText: 'Select your date of birth',
           ),
           readOnly: true,
           onTap: () => _selectDate(context),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Silakan pilih tanggal lahir Anda';
+              return 'Please select your date of birth';
             }
             return null;
           },
@@ -397,7 +397,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Jenis Kelamin Anda',
+          'Your Gender',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -405,25 +405,25 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Informasi ini membantu kami menyediakan rekomendasi yang sesuai dengan kebutuhan Anda.',
+          'This information helps us provide recommendations that match your needs.',
           style: TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
         DropdownButtonFormField<String>(
           value: _selectedGender,
           decoration: const InputDecoration(
-            labelText: 'Jenis Kelamin',
+            labelText: 'Gender',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.wc),
           ),
           items: const [
             DropdownMenuItem(
-              value: 'Laki-laki',
-              child: Text('Laki-laki'),
+              value: 'Male',
+              child: Text('Male'),
             ),
             DropdownMenuItem(
-              value: 'Perempuan',
-              child: Text('Perempuan'),
+              value: 'Female',
+              child: Text('Female'),
             ),
           ],
           onChanged: (value) {
@@ -443,7 +443,7 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Ukuran Tubuh Anda',
+          'Your Body Measurements',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -451,29 +451,29 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Informasi ini membantu kami menyediakan rekomendasi yang sesuai dengan kondisi fisik Anda.',
+          'This information helps us provide recommendations that match your physical condition.',
           style: TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
         TextFormField(
           controller: _weightController,
           decoration: const InputDecoration(
-            labelText: 'Berat Badan (kg)',
+            labelText: 'Weight (kg)',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.monitor_weight),
           ),
           keyboardType: TextInputType.number,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Silakan masukkan berat badan Anda';
+              return 'Please enter your weight';
             }
             try {
               final weight = double.parse(value);
               if (weight <= 0) {
-                return 'Berat badan harus lebih dari 0';
+                return 'Weight must be greater than 0';
               }
             } catch (e) {
-              return 'Format tidak valid';
+              return 'Invalid format';
             }
             return null;
           },
@@ -482,22 +482,22 @@ class _ProfileOnboardingScreenState extends State<ProfileOnboardingScreen> {
         TextFormField(
           controller: _heightController,
           decoration: const InputDecoration(
-            labelText: 'Tinggi Badan (cm)',
+            labelText: 'Height (cm)',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.height),
           ),
           keyboardType: TextInputType.number,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Silakan masukkan tinggi badan Anda';
+              return 'Please enter your height';
             }
             try {
               final height = double.parse(value);
               if (height <= 0) {
-                return 'Tinggi badan harus lebih dari 0';
+                return 'Height must be greater than 0';
               }
             } catch (e) {
-              return 'Format tidak valid';
+              return 'Invalid format';
             }
             return null;
           },
