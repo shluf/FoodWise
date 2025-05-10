@@ -297,7 +297,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-                onPressed: () => Navigator.of(context).popUntil(ModalRoute.withName('/home')),
+                onPressed: () => Navigator.of(context).pop(),
               // onPressed: () {
                 // Navigator.of(context).pushReplacement(
                 //   MaterialPageRoute(builder: (context) => const HomeScreen()),
