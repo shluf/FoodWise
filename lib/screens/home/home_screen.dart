@@ -461,10 +461,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             // Ikon piala dan jumlah poin
                           GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
-                              );
+                                    setState(() {
+                                    _selectedIndex = 3;
+                                  });
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -724,7 +723,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               // Creative Greeting Card with AI Insights - Integrated design with softer colors
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(26),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.12),
@@ -890,7 +889,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(30),
+                                        borderRadius: BorderRadius.circular(26),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black.withOpacity(0.15),
@@ -945,7 +944,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       margin: const EdgeInsets.only(right: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(26),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -1018,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(26),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -1137,7 +1136,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       height: 150,
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(26),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
@@ -1182,8 +1181,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         
                         return GestureDetector(
                           onTap: () {
-                            if (scan.isDone && scan.aiRemainingPercentage != null) {
+                            if (!scan.isDone) {
+                              // For unfinished food, navigate to ScanScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ScanScreen(
+                                    isRemainingFoodScan: false,
+                                    originalScan: scan,
+                                  ),
+                                ),
+                              );
+                            } else if (scan.isDone && scan.aiRemainingPercentage != null) {
+                              // For finished food with remaining analysis, show comparison results
                               _showAnalysisDetails(scan);
+                            } else if (scan.isDone && scan.isEaten) {
+                              // For finished food that was eaten completely, show finish dialog
+                              _showFinishFoodDialog(context, scan);
                             }
                           },
                           child: Container(
@@ -1191,7 +1205,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             height: 150,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(26),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -1204,7 +1218,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 ClipRRect(
-                                  borderRadius: const BorderRadius.all(Radius.circular(30)),
+                                  borderRadius: const BorderRadius.all(Radius.circular(26)),
                                   child: scan.imageUrl != null 
                                     ? Image.network(
                                         scan.imageUrl!,
@@ -1292,7 +1306,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       
                                       if (scan.isDone)
                                         Container(
-                                          padding: const EdgeInsets.only(left: 12, top: 2, right: 12),
+                                          margin: const EdgeInsets.only(left: 12, top: 0, right: 12),
+                                          padding: const EdgeInsets.only(left: 6, top: 2, right: 6),
                                           decoration: BoxDecoration(
                                             border: Border(
                                               left: BorderSide(
