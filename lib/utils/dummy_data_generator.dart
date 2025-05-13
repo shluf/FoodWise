@@ -26,6 +26,7 @@ class DummyDataGenerator {
         // Map JSON data to FoodScanModel
         final foodScan = FoodScanModel(
           id: '', // Firestore will generate this
+          count: 1,
           userId: userId,
           foodName: item['foodName'] ?? 'Unknown Food', // Default value for foodName
           imageUrl: item['imageUrl'] ?? '', // Default empty string for imageUrl

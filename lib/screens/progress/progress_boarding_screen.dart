@@ -327,7 +327,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                       
                       // Food Waste Summary Section
                       
-                      // Carbon Emmisionsion Converter
+                      // Carbon Emissions Converter
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -383,7 +383,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
-                                          'Total food waste: ${totalFoodWaste['totalWeight_gram'].toStringAsFixed(2)} gram',
+                                          'Total food waste: ${totalFoodWaste['totalWeight_gram'] > 0 ? totalFoodWaste['totalWeight_gram'].toStringAsFixed(2) : "0.00"} gram',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w400,
@@ -415,7 +415,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
-                                          'Total carbon emissions from food waste: ${totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3)} kg',
+                                          'Total carbon emissions from food waste: ${totalFoodWaste['totalCarbonEmission_kgCO2'] > 0 ? totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3) : "0.000"} kg',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w400,
@@ -444,88 +444,6 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                   )
                                 ],
                               ),
-                            Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: SizedBox(
-                                        width: 20, 
-                                        height: 20, 
-                                        child: Image.asset(
-                                          'assets/images/fw_gram.png',
-                                          fit: BoxFit.contain, 
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'Total food waste: ${totalFoodWaste['totalWeight_gram'] > 0 ? totalFoodWaste['totalWeight_gram'].toStringAsFixed(2) : "0.00"} gram',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400,
-                                          fontFamily: 'Inter',
-                                          color: Color(0xFF070707),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: SizedBox(
-                                        width: 20, 
-                                        height: 20, 
-                                        child: Image.asset(
-                                          'assets/images/fw_emissions.png',
-                                          fit: BoxFit.contain, 
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'Total carbon emissions from food waste: ${totalFoodWaste['totalCarbonEmission_kgCO2'] > 0 ? totalFoodWaste['totalCarbonEmission_kgCO2'].toStringAsFixed(3) : "0.000"} kg',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400,
-                                          fontFamily: 'Inter',
-                                          color: Color(0xFF070707),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                const Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                        "Let's aim to reduce that",
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          fontStyle: FontStyle.italic, 
-                                          fontFamily: 'Inter',
-                                          color: Color(0xFF070707),
-                                        ),
-                                      ),
-                                  ],
-                                )
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -734,21 +652,21 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
+                                      const Row(
                                         children: [
                                           Icon(
                                             Icons.lightbulb_outline,
-                                            color: const Color(0xFF226CE0),
+                                            color: Color(0xFF226CE0),
                                             size: 20,
                                           ),
-                                          const SizedBox(width: 8),
+                                          SizedBox(width: 8),
                                           Text(
                                             'Your Eating Patterns',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
                                               fontFamily: 'Inter',
-                                              color: const Color(0xFF226CE0),
+                                              color: Color(0xFF226CE0),
                                             ),
                                           ),
                                         ],
@@ -784,21 +702,21 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
+                                      const Row(
                                         children: [
                                           Icon(
                                             Icons.tips_and_updates_outlined,
-                                            color: const Color(0xFF81C784),
+                                            color: Color(0xFF81C784),
                                             size: 20,
                                           ),
-                                          const SizedBox(width: 8),
+                                          SizedBox(width: 8),
                                           Text(
                                             'Suggested Improvements',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
                                               fontFamily: 'Inter',
-                                              color: const Color(0xFF81C784),
+                                              color: Color(0xFF81C784),
                                             ),
                                           ),
                                         ],
@@ -1238,7 +1156,7 @@ class _ProgressBoardingScreenState extends State<ProgressBoardingScreen> {
   }
 
   Widget _buildMealTimeCharts(List<dynamic> foodWasteByMealTime) {
-    final colors = [Color(0xFF000000), Color(0xFF000000), Color(0xFF000000)];
+    final colors = [const Color(0xFF000000), const Color(0xFF000000), const Color(0xFF000000)];
     
     // Define default meal times to always show even if data is empty
     final defaultMealTimes = ['Breakfast', 'Lunch', 'Dinner'];

@@ -6,7 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../widgets/food_comparison_result_widget.dart';
-import '../../utils/dummy_data_generator.dart'; // Import DummyDataGenerator
+// Import DummyDataGenerator
 import '../scan/food_waste_scan_screen.dart';
 
 class HistoryScreen extends StatefulWidget {

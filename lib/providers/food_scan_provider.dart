@@ -125,6 +125,7 @@ class FoodScanProvider extends ChangeNotifier {
       final scanWithId = FoodScanModel(
         id: docId,
         userId: updatedFoodScan.userId,
+        count: updatedFoodScan.count,
         foodName: updatedFoodScan.foodName,
         scanTime: updatedFoodScan.scanTime,
         finishTime: updatedFoodScan.finishTime,
@@ -277,9 +278,7 @@ class FoodScanProvider extends ChangeNotifier {
     try {
       // Firebase Storage URL biasanya memiliki format: 
       // https://firebasestorage.googleapis.com/v0/b/[bucket]/o/[path]?token=[token]
-      // Kita perlu mengambil [path] dan mendecode-nya
-      
-      // Parse URL
+
       final uri = Uri.parse(url);
       
       final pathSegment = uri.path.split('/o/').last;

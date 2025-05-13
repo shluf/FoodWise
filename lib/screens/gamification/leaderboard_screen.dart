@@ -269,11 +269,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Flexible( // Ensure the content adjusts dynamically
-                    child: Icon(
-                      Icons.monetization_on,
-                      color: Colors.amber,
-                      size: 16,
+                  Flexible( // Ensure the content adjusts dynamically
+                    child:  Image.asset(
+                      'assets/icons/point_icon.png',
+                      width: 20,
+                      height: 20,
                     ),
                   ),
                   const SizedBox(width: 4),

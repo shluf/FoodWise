@@ -51,11 +51,24 @@ class FoodItem {
       'remainingWeight': remainingWeight,
     };
   }
+
+  FoodItem copyWith({
+    String? itemName,
+    double? weight,
+    double? remainingWeight,
+  }) {
+    return FoodItem(
+      itemName: itemName ?? this.itemName,
+      weight: weight ?? this.weight,
+      remainingWeight: remainingWeight ?? this.remainingWeight,
+    );
+  }
 }
 
 class FoodScanModel {
   final String id;
   final String userId;
+  final int count;
   final String foodName;
   final List<FoodItem> foodItems;
   final List<PotentialFoodWasteItem>? potentialFoodWasteItems; // item makanan yang berpotensi jadi foodwaste
@@ -71,6 +84,7 @@ class FoodScanModel {
   FoodScanModel({
     required this.id,
     required this.userId,
+    required this.count,
     required this.foodName, 
     required this.foodItems,
     required this.scanTime,
@@ -103,6 +117,7 @@ class FoodScanModel {
     return FoodScanModel(
       id: id,
       userId: map['userId'] ?? '',
+      count: map['count'] ?? 1,
       foodName: map['foodName'] ?? '',
       scanTime: (map['scanTime'] as Timestamp).toDate(),
       finishTime: map['finishTime'] != null 
@@ -163,6 +178,7 @@ class FoodScanModel {
     return FoodScanModel(
       id: id,
       userId: map['userId'] ?? '',
+      count: map['count'] ?? 1,
       foodName: map['foodName'] ?? '',
       scanTime: scanTime,
       finishTime: finishTime,
@@ -184,6 +200,7 @@ class FoodScanModel {
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
+      'count': count,
       'foodName': foodName,
       'scanTime': scanTime,
       'finishTime': finishTime,
@@ -200,6 +217,7 @@ class FoodScanModel {
   
   FoodScanModel copyWith({
     String? userId,
+    int? count,
     String? foodName,
     DateTime? scanTime,
     DateTime? finishTime,
@@ -215,6 +233,7 @@ class FoodScanModel {
     return FoodScanModel(
       id: id,
       userId: userId ?? this.userId,
+      count: count ?? this.count,
       foodName: foodName ?? this.foodName,
       scanTime: scanTime ?? this.scanTime,
       finishTime: finishTime ?? this.finishTime,

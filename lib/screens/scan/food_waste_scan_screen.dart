@@ -188,18 +188,18 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
       return Scaffold(
         body: Container(
           color: Colors.white,
-          child: const Center(
+          child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.camera_alt,
-                  size: 80,
-                  color: Colors.black,
+                Image.asset(
+                  'assets/icons/ai_icon_anim.gif',
+                  width: 240,
+                  height: 240,
                 ),
-                SizedBox(height: 20),
-                Text(
-                  'AI still analyzing your food',
+                const SizedBox(height: 20),
+                const Text(
+                  'Gemini still trying to fix your result',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

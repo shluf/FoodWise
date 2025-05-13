@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:foodwise/screens/layout/layout_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,12 +12,12 @@ import 'providers/food_scan_provider.dart';
 import 'providers/gamification_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/welcome_screen.dart';
-import 'screens/home/home_screen.dart';
 import 'screens/onboarding/profile_onboarding_screen.dart';
 import 'screens/scan/scan_screen.dart';
 import 'utils/app_colors.dart';
 import 'services/firestore_service.dart';
 import 'dart:async';
+import 'screens/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -138,13 +139,16 @@ class MyApp extends StatelessWidget {
         future: _initializeApp(context),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator(); // Show loading indicator
+            return const SplashScreen();
+          }
+          if (snapshot.hasError) {
+            return const Scaffold(body: Center(child: Text('Error during initialization')));
           }
           return const AuthWrapper();
         },
       ),
       routes: {
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const LayoutScreen(),
         '/login': (context) => const LoginScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/profile': (context) => const ProfileOnboardingScreen(),
@@ -262,7 +266,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           
           // Jika sudah login dan profil lengkap
           if (authProvider.isLoggedIn) {
-            return const HomeScreen();
+            return const LayoutScreen();
           }
           
           // Jika ternyata sudah tidak login (validasi di belakang gagal)

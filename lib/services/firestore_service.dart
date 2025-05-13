@@ -242,6 +242,29 @@ class FirestoreService {
     });
   }
 
+  Stream<List<Map<String, dynamic>>> getUserLeaderboardStream(String userId) {
+    return _firestore
+        .collection('users')
+        .orderBy('points', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      final leaderboardData = snapshot.docs.asMap().entries.map((entry) {
+        final index = entry.key;
+        final doc = entry.value;
+        return {
+          'id': doc.id,
+          'username': doc.data()['username'] ?? 'Unknown',
+          'points': doc.data()['points'] ?? 0,
+          'rank': index + 1,
+        };
+      }).toList();
+
+      final userRankData = leaderboardData.where((element) => element['id'] == userId).toList();
+
+      return userRankData;
+    });
+  }
+
   // Gamifikasi Collection
   // =====================
   
@@ -390,14 +413,10 @@ Future<void> generateQuestList(String userId) async {
         final questData = json.decode(questJson)['quest'] as List<dynamic>;
 
         // Ensure questData is a list of maps
-        if (questData is List) {
-          // Update the user's quest field in Firestore
-          await userDoc.update({'quest': questData});
-          debugPrint('Quest list generated and added to Firestore for user: $userId');
-        } else {
-          throw Exception('Invalid quest data format in JSON.');
-        }
-      } else {
+        // Update the user's quest field in Firestore
+        await userDoc.update({'quest': questData});
+        debugPrint('Quest list generated and added to Firestore for user: $userId');
+            } else {
         debugPrint('User already has quests, no need to generate.');
       }
     } else {
@@ -440,7 +459,7 @@ Future<void> initializeUserQuests(String userId) async {
     try {
       // Get the user data for passing to AI
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      final userData = userDoc.data() ?? {};
       
       // Fetch food scans for the user
       final snapshot = await _firestore
@@ -450,7 +469,7 @@ Future<void> initializeUserQuests(String userId) async {
           .get();
           
       final foodScans = snapshot.docs.map((doc) {
-        return FoodScanModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+        return FoodScanModel.fromMap(doc.data(), doc.id);
       }).toList();
 
       // Calculate summary data with async method
@@ -514,29 +533,29 @@ Future<void> initializeUserQuests(String userId) async {
       double mealTotalWeight = 0.0;
       double mealWasteWeight = 0.0;
 
-      for (var item in scan.foodItems!) {
+      for (var item in scan.foodItems) {
         // Validasi null untuk item.itemName dan item.weight
-        if (item.itemName == null || item.itemName!.isEmpty || item.weight == null) continue;
+        if (item.itemName.isEmpty) continue;
 
         final remainingWeight = item.remainingWeight ?? 0.0;
-        final weight = item.weight!;
+        final weight = item.weight;
 
         mealTotalWeight += weight;
         mealWasteWeight += remainingWeight;
 
         // Validasi null untuk kategori
-        final category = _categorizeByAI(item.itemName!);
+        final category = _categorizeByAI(item.itemName);
         if (categoryWaste.containsKey(category)) {
           categoryWaste[category] = categoryWaste[category]! + remainingWeight;
         }
 
         // Track top wasted items
-        itemWasteWeight[item.itemName!] = (itemWasteWeight[item.itemName!] ?? 0.0) + remainingWeight;
-        itemOccurrences[item.itemName!] = (itemOccurrences[item.itemName!] ?? 0) + 1;
+        itemWasteWeight[item.itemName] = (itemWasteWeight[item.itemName] ?? 0.0) + remainingWeight;
+        itemOccurrences[item.itemName] = (itemOccurrences[item.itemName] ?? 0) + 1;
 
         // Track most finished items
         if (remainingWeight == 0) {
-          finishedItemCount[item.itemName!] = (finishedItemCount[item.itemName!] ?? 0) + 1;
+          finishedItemCount[item.itemName] = (finishedItemCount[item.itemName] ?? 0) + 1;
         }
       }
     
@@ -660,8 +679,132 @@ Future<void> initializeUserQuests(String userId) async {
         .snapshots();
   }
 
-  
+  // --- FoodItem CRUD within FoodScan ---
 
+  Future<void> addFoodItemToScan(String foodScanId, FoodItem newItem) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['foodItems'] ?? []);
+        currentItems.add(newItem.toMap());
+        await docRef.update({'foodItems': currentItems});
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error adding food item to scan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateFoodItemInScan(String foodScanId, int itemIndex, FoodItem updatedItem) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['foodItems'] ?? []);
+        if (itemIndex >= 0 && itemIndex < currentItems.length) {
+          currentItems[itemIndex] = updatedItem.toMap();
+          await docRef.update({'foodItems': currentItems});
+        } else {
+           throw RangeError("Index out of bounds for updating food item.");
+        }
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error updating food item in scan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteFoodItemFromScan(String foodScanId, int itemIndex) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['foodItems'] ?? []);
+        if (itemIndex >= 0 && itemIndex < currentItems.length) {
+          currentItems.removeAt(itemIndex);
+          await docRef.update({'foodItems': currentItems});
+        } else {
+          throw RangeError("Index out of bounds for deleting food item.");
+        }
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error deleting food item from scan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addPotentialWasteItemToScan(String foodScanId, PotentialFoodWasteItem newItem) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['potentialFoodWasteItems'] ?? []);
+        currentItems.add(newItem.toMap());
+        await docRef.update({'potentialFoodWasteItems': currentItems});
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error adding potential food waste item to scan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updatePotentialWasteItemInScan(String foodScanId, int itemIndex, PotentialFoodWasteItem updatedItem) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['potentialFoodWasteItems'] ?? []);
+        if (itemIndex >= 0 && itemIndex < currentItems.length) {
+          currentItems[itemIndex] = updatedItem.toMap();
+          await docRef.update({'potentialFoodWasteItems': currentItems});
+        } else {
+          throw RangeError("Index out of bounds for updating potential food waste item.");
+        }
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error updating potential food waste item in scan: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deletePotentialWasteItemFromScan(String foodScanId, int itemIndex) async {
+    try {
+      final docRef = _firestore.collection('foodScans').doc(foodScanId);
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final currentItems = List<Map<String, dynamic>>.from(docSnapshot.data()?['potentialFoodWasteItems'] ?? []);
+        if (itemIndex >= 0 && itemIndex < currentItems.length) {
+          currentItems.removeAt(itemIndex);
+          await docRef.update({'potentialFoodWasteItems': currentItems});
+        } else {
+          throw RangeError("Index out of bounds for deleting potential food waste item.");
+        }
+      } else {
+        throw Exception("FoodScan document with ID $foodScanId not found.");
+      }
+    } catch (e) {
+      print('Error deleting potential food waste item from scan: $e');
+      rethrow;
+    }
+  }
+  
 }
 
 

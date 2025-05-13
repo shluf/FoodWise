@@ -103,6 +103,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/icons/
     - lib/utils/food_dummies.json
     - lib/utils/quests_list.json
     # - assets/icons/

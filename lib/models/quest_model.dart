@@ -11,7 +11,7 @@ class QuestModel {
   final String status; // 
 
   QuestModel({
-    required this.id, // Include id in constructor
+    required this.id,
     required this.title,
     required this.description,
     required this.points,
@@ -23,10 +23,10 @@ class QuestModel {
 
   factory QuestModel.fromMap(Map<String, dynamic> map, String id) {
     return QuestModel(
-      id: id, // Ensure id is assigned correctly
-      title: map['title'] ?? 'Untitled Quest', // Default value for title
-      description: map['description'] ?? 'No description available.', // Default value for description
-      points: (map['points'] is int) ? map['points'] : int.tryParse(map['points'].toString()) ?? 0, // Handle int or string
+      id: id,
+      title: map['title'] ?? 'Untitled Quest',
+      description: map['description'] ?? 'No description available.',
+      points: (map['points'] is int) ? map['points'] : int.tryParse(map['points'].toString()) ?? 0,
       questType: map['questType'] ?? '',
       requirements: map['requirements'] ?? {},
       progress: map['progress'] ?? {},
@@ -36,7 +36,7 @@ class QuestModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id, // Include id in map
+      'id': id,
       'title': title,
       'description': description,
       'points': points,

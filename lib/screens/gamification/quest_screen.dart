@@ -117,6 +117,7 @@ class _QuestScreenState extends State<QuestScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
                 Text(
@@ -150,10 +151,10 @@ class _QuestScreenState extends State<QuestScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.monetization_on,
-                        color: Colors.amber, // Warna emas
-                        size: 20,
+                      Image.asset(
+                        'assets/icons/point_icon.png',
+                        width: 30,
+                        height: 30,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -167,7 +168,6 @@ class _QuestScreenState extends State<QuestScreen> {
                     ],
                   ),
                 ),
-                // Tampilkan tombol "Claim" hanya jika status adalah "completed"
                 if (status == 'completed')
                   ElevatedButton(
                     onPressed: () => _claimQuest(name, point),
@@ -207,7 +207,7 @@ class _QuestScreenState extends State<QuestScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFF226CE0).withOpacity(0.2),
+                color: const Color(0xFF226CE0).withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -226,7 +226,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -249,10 +249,10 @@ class _QuestScreenState extends State<QuestScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.monetization_on,
-                    color: Color(0xFF070707),
-                    size: 20,
+                  Image.asset(
+                      'assets/icons/point_icon.png',
+                      width: 30,
+                      height: 30,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -406,11 +406,11 @@ class _QuestScreenState extends State<QuestScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16), // Jarak antar elemen
-                const Icon(
-                  Icons.monetization_on,
-                  color: Colors.amber, // Warna emas
-                  size: 64, // Ukuran ikon lebih besar
-                ),
+                 Image.asset(
+                        'assets/icons/point_icon_anim.gif',
+                        width: 64,
+                        height: 64,
+                      ),
               ],
             ),
           ),
