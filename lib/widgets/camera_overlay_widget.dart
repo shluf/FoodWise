@@ -283,246 +283,278 @@ class _CameraWithOverlayScreenState extends State<CameraWithOverlayScreen> with 
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Camera view
-          _isCameraInitialized
-              ? SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: CameraPreview(_cameraController!),
-                )
-              : Container(
-                  color: Colors.black,
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    Widget bodyContent;
+
+    if (!_isCameraInitialized || _cameraController == null || !_cameraController!.value.isInitialized) {
+      bodyContent = const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.camera_alt,
+              size: 60,
+              color: Colors.black,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Initializing camera...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black, 
+              ),
+            ),
+            SizedBox(height: 24),
+            CircularProgressIndicator(),
+          ],
+        ),
+      );
+    } else {
+      bodyContent = OrientationBuilder(
+        builder: (context, orientation) {
+          final CameraController controller = _cameraController!;
+          double previewAspectRatio;
+          final double sensorAspectRatio = controller.value.aspectRatio;
+
+          if (orientation == Orientation.portrait) {
+            previewAspectRatio = sensorAspectRatio > 1 ? (1 / sensorAspectRatio) : sensorAspectRatio;
+          } else { // Orientation.landscape
+            previewAspectRatio = sensorAspectRatio > 1 ? sensorAspectRatio : (1 / sensorAspectRatio);
+          }
+
+          Widget cameraPreviewWidget = CameraPreview(controller);
+          if (controller.description.lensDirection == CameraLensDirection.front) {
+            cameraPreviewWidget = Transform.scale(
+              scaleX: -1,
+              child: cameraPreviewWidget,
+            );
+          }
+
+          return Stack(
+            children: [
+              // Camera view
+              SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: 100.0, 
+                    child: AspectRatio(
+                      aspectRatio: previewAspectRatio,
+                      child: cameraPreviewWidget,
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Previous image overlay
+              if (_showOverlay)
+                CameraOverlayWidget(
+                  previousImagePath: widget.previousImagePath,
+                  previousImageUrl: widget.previousImageUrl,
+                  opacity: _overlayOpacity,
+                ),
+                
+              // Scan frame corners
+              Center(
+                child: SizedBox(
+                  width: 250,
+                  height: 250,
+                  child: CustomPaint(
+                    painter: CornerPainter(
+                      color: Colors.white,
+                      strokeWidth: 3.0,
+                      cornerLength: 30.0,
+                    ),
+                  ),
+                ),
+              ),
+                
+              // Header with back button
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.camera_alt,
-                          size: 60,
-                          color: Colors.black,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Initializing camera...',
-                          style: TextStyle(
+                        Container(
+                          margin: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
                             color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            onPressed: () => Navigator.of(context).pop(),
+                            padding: const EdgeInsets.all(8.0),
                           ),
                         ),
-                        SizedBox(height: 24),
-                        CircularProgressIndicator(
-                          color: Colors.white,
-                        ),
+                        if (widget.previousImagePath != null || widget.previousImageUrl != null)
+                          IconButton(
+                            icon: Icon(
+                              _showOverlay ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            onPressed: () {
+                              if (mounted) {
+                                setState(() {
+                                  _showOverlay = !_showOverlay;
+                                });
+                              }
+                            },
+                            tooltip: 'Show/Hide Overlay',
+                          ),
                       ],
                     ),
                   ),
                 ),
-          
-          // Previous image overlay
-          if (_showOverlay)
-            CameraOverlayWidget(
-              previousImagePath: widget.previousImagePath,
-              previousImageUrl: widget.previousImageUrl,
-              opacity: _overlayOpacity,
-            ),
-            
-          // Scan frame corners
-          Center(
-            child: SizedBox(
-              width: 250,
-              height: 250,
-              child: CustomPaint(
-                painter: CornerPainter(
-                  color: Colors.white,
-                  strokeWidth: 3.0,
-                  cornerLength: 30.0,
-                ),
               ),
-            ),
-          ),
-            
-          // Header with back button
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.all(4.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.black),
-                        onPressed: () => Navigator.of(context).pop(),
-                        padding: const EdgeInsets.all(8.0),
-                      ),
-                    ),
-                    if (widget.previousImagePath != null || widget.previousImageUrl != null)
-                      IconButton(
-                        icon: Icon(
-                          _showOverlay ? Icons.visibility : Icons.visibility_off,
+              
+              // Overlay transparency controls
+              if (_showOverlay && (widget.previousImagePath != null || widget.previousImageUrl != null))
+                Positioned(
+                  bottom: 150,
+                  left: 20,
+                  right: 20,
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Overlay Transparency',
+                        style: TextStyle(
                           color: Colors.white,
-                          size: 28,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 3,
+                              color: Colors.black45,
+                            ),
+                          ],
                         ),
-                        onPressed: () {
+                      ),
+                      Slider(
+                        value: _overlayOpacity,
+                        min: 0.1,
+                        max: 0.9,
+                        divisions: 8,
+                        activeColor: Colors.white,
+                        inactiveColor: Colors.white54,
+                        label: '${(_overlayOpacity * 100).round()}%',
+                        onChanged: (value) {
                           if (mounted) {
                             setState(() {
-                              _showOverlay = !_showOverlay;
+                              _overlayOpacity = value;
                             });
                           }
                         },
-                        tooltip: 'Show/Hide Overlay',
                       ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          // Overlay transparency controls
-          if (_showOverlay && (widget.previousImagePath != null || widget.previousImageUrl != null))
-            Positioned(
-              bottom: 150,
-              left: 20,
-              right: 20,
-              child: Column(
-                children: [
-                  const Text(
-                    'Overlay Transparency',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(1, 1),
-                          blurRadius: 3,
-                          color: Colors.black45,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Slider(
-                    value: _overlayOpacity,
-                    min: 0.1,
-                    max: 0.9,
-                    divisions: 8,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white54,
-                    label: '${(_overlayOpacity * 100).round()}%',
-                    onChanged: (value) {
-                      if (mounted) {
-                        setState(() {
-                          _overlayOpacity = value;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          
-          // Loading indicator when capturing
-          if (_isCapturing)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black38,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
+                    ],
                   ),
                 ),
-              ),
-            ),
-          
-          // Bottom camera button area
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 120,
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Switch camera button
-                  CircleAvatar(
-                    backgroundColor: Colors.white54,
-                    radius: 25,
-                    child: IconButton(
-                      icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
-                      onPressed: _switchCamera,
-                    ),
-                  ),
-                  
-                  const SizedBox(width: 40),
-                  
-                  // Capture button
-                  GestureDetector(
-                    onTap: _isCapturing ? null : _captureImage,
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
+              
+              // Loading indicator
+              if (_isCapturing)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black38,
+                    child: const Center(
+                      child: CircularProgressIndicator(
                         color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 3,
+                      ),
+                    ),
+                  ),
+                ),
+              
+              // Bottom camera button area
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 120,
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Switch camera button
+                      CircleAvatar(
+                        backgroundColor: Colors.white54,
+                        radius: 25,
+                        child: IconButton(
+                          icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
+                          onPressed: _switchCamera,
                         ),
                       ),
-                      child: _isCapturing
-                          ? const CircularProgressIndicator(
-                              color: Colors.black,
-                            )
-                          : Container(
-                              margin: const EdgeInsets.all(5),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
+                      
+                      const SizedBox(width: 40),
+                      
+                      // Capture button
+                      GestureDetector(
+                        onTap: _isCapturing ? null : _captureImage,
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
                             ),
-                    ),
-                  ),
-
-                  // Flashlight button
-                  const SizedBox(width: 40),
-                  CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.7),
-                    radius: 25,
-                    child: IconButton(
-                      icon: Icon(
-                        _flashlightOn ? Icons.flash_on : Icons.flash_off, 
-                        color: _flashlightOn ? Colors.amber : Colors.black,
-                        size: 24,
+                          ),
+                          child: _isCapturing
+                              ? const CircularProgressIndicator(
+                                  color: Colors.black,
+                                )
+                              : Container(
+                                  margin: const EdgeInsets.all(5),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                        ),
                       ),
-                      onPressed: _toggleFlashlight,
-                    ),
+
+                      // Flashlight button
+                      const SizedBox(width: 40),
+                      CircleAvatar(
+                        backgroundColor: Colors.white.withOpacity(0.7),
+                        radius: 25,
+                        child: IconButton(
+                          icon: Icon(
+                            _flashlightOn ? Icons.flash_on : Icons.flash_off, 
+                            color: _flashlightOn ? Colors.amber : Colors.black,
+                            size: 24,
+                          ),
+                          onPressed: _toggleFlashlight,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
+            ],
+          );
+        },
+      );
+    }
+
+    return Scaffold(
+      body: bodyContent,
     );
   }
 } 

@@ -870,7 +870,7 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Widget _buildCameraView() {
-    if (!_isCameraInitialized) {
+    if (!_isCameraInitialized || cameraController == null || !cameraController!.value.isInitialized) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -895,125 +895,156 @@ class _ScanScreenState extends State<ScanScreen> {
       );
     }
 
-    return Stack(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: CameraPreview(cameraController!),
-        ),
-        
-        Center(
-          child: SizedBox(
-            width: 250,
-            height: 250,
-            child: CustomPaint(
-              painter: CornerPainter(
-                color: Colors.white,
-                strokeWidth: 3.0,
-                cornerLength: 30.0,
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        final CameraController controller = cameraController!;
+        double previewAspectRatio;
+        final double sensorAspectRatio = controller.value.aspectRatio;
+
+        if (orientation == Orientation.portrait) {
+          previewAspectRatio = sensorAspectRatio > 1 ? (1 / sensorAspectRatio) : sensorAspectRatio;
+        } else { // Orientation.landscape
+          previewAspectRatio = sensorAspectRatio > 1 ? sensorAspectRatio : (1 / sensorAspectRatio);
+        }
+
+        Widget cameraPreviewWidget = CameraPreview(controller);
+        if (controller.description.lensDirection == CameraLensDirection.front) {
+          cameraPreviewWidget = Transform.scale(
+            scaleX: -1,
+            child: cameraPreviewWidget,
+          );
+        }
+
+        return Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: 100.0,
+                  child: AspectRatio(
+                    aspectRatio: previewAspectRatio,
+                    child: cameraPreviewWidget, 
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(4.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+            
+            Center(
+              child: SizedBox(
+                width: 250,
+                height: 250,
+                child: CustomPaint(
+                  painter: CornerPainter(
+                    color: Colors.white,
+                    strokeWidth: 3.0,
+                    cornerLength: 30.0,
+                  ),
+                ),
+              ),
+            ),
+            
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: const EdgeInsets.all(8.0),
-                    ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          onPressed: () => Navigator.of(context).pop(),
+                          padding: const EdgeInsets.all(8.0),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-        
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 120,
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white54,
-                  radius: 25,
-                  child: IconButton(
-                    icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
-                    onPressed: _switchCamera,
-                  ),
-                ),
-                
-                const SizedBox(width: 40),
-                
-                GestureDetector(
-                  onTap: _takePicture,
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 3,
+            
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 120,
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white54,
+                      radius: 25,
+                      child: IconButton(
+                        icon: const Icon(Icons.flip_camera_ios, color: Colors.black, size: 25),
+                        onPressed: _switchCamera,
                       ),
                     ),
-                    child: Container(
-                      margin: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                    
+                    const SizedBox(width: 40),
+                    
+                    GestureDetector(
+                      onTap: _takePicture,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 3,
+                          ),
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(5),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                
-                const SizedBox(width: 40),
-                CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.7),
-                  radius: 25,
-                  child: IconButton(
-                    icon: Icon(
-                      _flashlightOn ? Icons.flash_on : Icons.flash_off,
-                      color: _flashlightOn ? Colors.amber : Colors.black,
-                      size: 24,
+                    
+                    const SizedBox(width: 40),
+                    CircleAvatar(
+                      backgroundColor: Colors.white.withOpacity(0.7),
+                      radius: 25,
+                      child: IconButton(
+                        icon: Icon(
+                          _flashlightOn ? Icons.flash_on : Icons.flash_off,
+                          color: _flashlightOn ? Colors.amber : Colors.black,
+                          size: 24,
+                        ),
+                        onPressed: _toggleFlashlight,
+                      ),
                     ),
-                    onPressed: _toggleFlashlight,
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

@@ -583,8 +583,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> with TickerProvid
                   Text(
                     'Recently Logged',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                      fontWeight: FontWeight.w900,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),

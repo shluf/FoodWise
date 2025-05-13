@@ -308,7 +308,7 @@ class _QuestScreenState extends State<QuestScreen> {
                   'Challenges',
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                     color: Theme.of(context).primaryColor, // Warna primary
                   ),
                 ),
