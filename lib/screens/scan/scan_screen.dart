@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/firestore_service.dart'; // Ensure this is the correct path to FirestoreService
+import '../../services/firestore_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../widgets/scan/result_view.dart'; // Corrected Import Path
+import '../../widgets/scan/result_view.dart';
 
 class CornerPainter extends CustomPainter {
   final Color color;
@@ -744,6 +744,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   // Use ResultView here
                   : ResultView(
                       image: _image,
+                      imageUrl: null,
                       isRemainingFoodScan: widget.isRemainingFoodScan,
                       originalScan: widget.originalScan,
                       foodName: _foodName,
@@ -753,7 +754,6 @@ class _ScanScreenState extends State<ScanScreen> {
                       potentialFoodWasteItems: _potentialFoodWasteItems,
                       isEaten: _isEaten,
                       isSaving: _isSaving,
-                      showAddFoodItemForm: _showAddFoodItemForm,
                       showAddItemForm: _showAddItemForm,
                       weightController: _weightController,
                       newItemNameController: _newItemNameController,
@@ -762,6 +762,9 @@ class _ScanScreenState extends State<ScanScreen> {
                       formatDuration: _formatDuration,
                       calculateTotalOriginalWeight: _calculateTotalOriginalWeight,
                       calculatePercentageRemaining: _calculatePercentageRemaining,
+                      scanTime: widget.originalScan?.scanTime ?? DateTime.now(),
+                      count: _count,
+                      onCountChanged: _updateCount,
                       onIsEatenChanged: (value) {
                         setState(() {
                           _isEaten = value;
@@ -1085,5 +1088,14 @@ class _ScanScreenState extends State<ScanScreen> {
     
     double percentage = (currentWeight / referenceWeight) * 100;
     return percentage.clamp(0.0, 100.0); // Clamp between 0 and 100
+  }
+
+  // Callback to update the count from ResultView
+  void _updateCount(int newCount) {
+    if (newCount > 0) { // Basic validation for count
+      setState(() {
+        _count = newCount;
+      });
+    }
   }
 }

@@ -226,6 +226,7 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -236,18 +237,10 @@ class _FoodWasteScanScreenState extends State<FoodWasteScanScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 50,
-                  ),
+                Image.asset(
+                  'assets/icons/check_icon_anim.gif',
+                  width: 120,
+                  height: 120,
                 ),
                 const SizedBox(height: 40),
                 SizedBox(

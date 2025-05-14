@@ -242,11 +242,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingLocalAuth) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AnimatedLoadingScreen();
     }
 
     // Jika sudah login secara lokal, langsung ke home

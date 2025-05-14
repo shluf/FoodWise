@@ -10,6 +10,7 @@ import '../scan/scan_screen.dart';
 import '../scan/food_waste_scan_screen.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/food_comparison_result_widget.dart';
+import '../../widgets/scan/result_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:async';
@@ -69,6 +70,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> with TickerProvid
   String? _randomAIInsight;
   final List<AnimationController> _dayAnimationControllers = [];
   final List<Animation<double>> _dayScaleAnimations = [];
+  final TextEditingController _editItemNameController = TextEditingController();
+  final TextEditingController _editItemWeightController = TextEditingController();
+  bool _showAddItemFormState = false;
+  bool _showAddFoodItemFormState = false;
 
   @override
   void initState() {
@@ -659,15 +664,69 @@ class _HomeScreenContentState extends State<HomeScreenContent> with TickerProvid
                     return GestureDetector(
                       onTap: () {
                         if (!scan.isDone) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ScanScreen(
-                                isRemainingFoodScan: false,
-                                originalScan: scan,
+                          if (scan.imageUrl != null) {
+                            final weightController = TextEditingController(text: _calculateTotalWeight(scan).toString());
+                            
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return StatefulBuilder(
+                                    builder: (context, setState) => ResultView(
+                                      image: null,
+                                      imageUrl: scan.imageUrl,
+                                      isRemainingFoodScan: false,
+                                      originalScan: scan,
+                                      foodName: scan.foodName,
+                                      scanResult: null,
+                                      carbonFootprint: 0.0,
+                                      foodItems: scan.foodItems,
+                                      potentialFoodWasteItems: scan.potentialFoodWasteItems ?? [],
+                                      isEaten: false,
+                                      isSaving: false,
+                                      showAddItemForm: _showAddItemFormState,
+                                      weightController: weightController,
+                                      newItemNameController: _editItemNameController,
+                                      newItemWeightController: _editItemWeightController,
+                                      formatTime: (time) => DateFormat('HH:mm').format(time),
+                                      formatDuration: _formatDuration,
+                                      calculateTotalOriginalWeight: () => _calculateTotalWeight(scan),
+                                      calculatePercentageRemaining: () => 100.0,
+                                      onIsEatenChanged: (_) {},
+                                      onWeightChanged: (value) => _onWeightChanged(value, scan, setState),
+                                      toggleAddFoodItemForm: () => _toggleAddFoodItemForm(scan, setState),
+                                      addNewFoodItem: () => _addNewFoodItem(scan, setState),
+                                      updateFoodItemWeight: (index, weight) => _updateFoodItemWeight(scan, index, weight),
+                                      removeFoodItem: (index) => _removeFoodItem(scan, index),
+                                      toggleAddItemForm: () => _toggleAddItemForm(setState),
+                                      addNewWasteItem: () => _addNewWasteItem(scan, setState),
+                                      removeWasteItem: (index) => _removeWasteItem(scan, index),
+                                      resetScan: () => _resetEditScan(scan),
+                                      saveFoodScan: () => _saveFoodScanEdit(scan, weightController),
+                                      onBackPressed: () => Navigator.pop(context),
+                                      scanTime: scan.scanTime,
+                                      count: scan.count ?? 1,
+                                      onCountChanged: (newCount) async {
+                                        final updatedScan = scan.copyWith(count: newCount);
+                                        await _updateFoodScan(updatedScan, showSnackbar: false);
+                                        setState(() {});
+                                      },
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ScanScreen(
+                                  isRemainingFoodScan: false,
+                                  originalScan: scan,
+                                ),
+                              ),
+                            );
+                          }
                         } else if (scan.isDone && scan.aiRemainingPercentage != null) {
                           _showAnalysisDetails(scan);
                         } else if (scan.isDone && scan.isEaten) {
@@ -1319,5 +1378,217 @@ class _HomeScreenContentState extends State<HomeScreenContent> with TickerProvid
         ),
       ),
     );
+  }
+
+  Future<void> _updateFoodScan(FoodScanModel updatedScan, {bool showSnackbar = true}) async {
+    final foodScanProvider = Provider.of<FoodScanProvider>(context, listen: false);
+    final success = await foodScanProvider.updateFoodScan(updatedScan);
+    
+    if (success && mounted && showSnackbar) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data makanan berhasil diperbarui')),
+      );
+    }
+  }
+  
+  void _toggleAddFoodItemForm(FoodScanModel scan, StateSetter setState) {
+    setState(() {
+      _showAddItemFormState = !_showAddItemFormState;
+      
+      if (_showAddItemFormState) {
+        _editItemNameController.clear();
+        _editItemWeightController.clear();
+      }
+    });
+  }
+  
+  void _addNewFoodItem(FoodScanModel scan, StateSetter setState, {bool navigateBack = false}) async {
+    if (_editItemNameController.text.isEmpty || _editItemWeightController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan berat item harus diisi')),
+      );
+      return;
+    }
+    
+    double? weight = double.tryParse(_editItemWeightController.text);
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Berat harus berupa angka positif')),
+      );
+      return;
+    }
+    
+    final updatedFoodItems = List<FoodItem>.from(scan.foodItems);
+    updatedFoodItems.add(
+      FoodItem(
+        itemName: _editItemNameController.text,
+        weight: weight,
+        remainingWeight: null,
+      ),
+    );
+    
+    final updatedScan = scan.copyWith(
+      foodItems: updatedFoodItems,
+    );
+    
+    await _updateFoodScan(updatedScan, showSnackbar: false);
+    
+    setState(() {
+      _showAddItemFormState = false;
+      _editItemNameController.clear();
+      _editItemWeightController.clear();
+    });
+    
+    if (navigateBack && mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item baru berhasil ditambahkan')),
+      );
+    }
+  }
+  
+  void _updateFoodItemWeight(FoodScanModel scan, int index, double newWeight) async {
+    if (index < 0 || index >= scan.foodItems.length) return;
+    
+    final updatedFoodItems = List<FoodItem>.from(scan.foodItems);
+    
+    final item = updatedFoodItems[index];
+    updatedFoodItems[index] = FoodItem(
+      itemName: item.itemName,
+      weight: newWeight,
+      remainingWeight: item.remainingWeight,
+    );
+    
+    final updatedScan = scan.copyWith(
+      foodItems: updatedFoodItems,
+    );
+    
+    await _updateFoodScan(updatedScan);
+  }
+  
+  void _removeFoodItem(FoodScanModel scan, int index) async {
+    if (index < 0 || index >= scan.foodItems.length) return;
+    
+    final updatedFoodItems = List<FoodItem>.from(scan.foodItems);
+    updatedFoodItems.removeAt(index);
+    
+    final updatedScan = scan.copyWith(
+      foodItems: updatedFoodItems,
+    );
+    
+    await _updateFoodScan(updatedScan);
+  }
+  
+  void _resetEditScan(FoodScanModel scan) {
+    Navigator.pop(context);
+  }
+  
+  void _toggleAddItemForm(StateSetter setState) {
+    setState(() {
+      _showAddItemFormState = !_showAddItemFormState;
+      if (_showAddItemFormState) {
+        _editItemNameController.clear();
+        _editItemWeightController.clear();
+      }
+    });
+  }
+  
+  void _addNewWasteItem(FoodScanModel scan, StateSetter setState) async {
+    if (_editItemNameController.text.isEmpty || _editItemWeightController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan berat item harus diisi')),
+      );
+      return;
+    }
+    
+    double? weight = double.tryParse(_editItemWeightController.text);
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Berat harus berupa angka positif')),
+      );
+      return;
+    }
+    
+    double estimatedEmission = weight * 0.01;
+    
+    final updatedWasteItems = List<PotentialFoodWasteItem>.from(scan.potentialFoodWasteItems ?? []);
+    updatedWasteItems.add(
+      PotentialFoodWasteItem(
+        itemName: _editItemNameController.text,
+        estimatedCarbonEmission: estimatedEmission,
+      ),
+    );
+    
+    final updatedScan = scan.copyWith(
+      potentialFoodWasteItems: updatedWasteItems.isEmpty ? null : updatedWasteItems,
+    );
+    
+    await _updateFoodScan(updatedScan);
+    
+    setState(() {
+      _showAddItemFormState = false;
+      _editItemNameController.clear();
+      _editItemWeightController.clear();
+    });
+  }
+  
+  void _removeWasteItem(FoodScanModel scan, int index) async {
+    if (scan.potentialFoodWasteItems == null || 
+        index < 0 || 
+        index >= scan.potentialFoodWasteItems!.length) return;
+    
+    final updatedWasteItems = List<PotentialFoodWasteItem>.from(scan.potentialFoodWasteItems!);
+    updatedWasteItems.removeAt(index);
+    
+    final updatedScan = scan.copyWith(
+      potentialFoodWasteItems: updatedWasteItems.isEmpty ? null : updatedWasteItems,
+    );
+    
+    await _updateFoodScan(updatedScan);
+  }
+  
+  void _onWeightChanged(String value, FoodScanModel scan, StateSetter setState) {
+    final double? weight = double.tryParse(value);
+    if (weight != null && weight >= 0) {
+      setState(() {});
+    }
+  }
+  
+  void _saveFoodScanEdit(FoodScanModel scan, TextEditingController weightController) async {
+    double? weight = double.tryParse(weightController.text);
+    
+    if (weight == null || weight < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masukkan berat makanan yang valid')),
+      );
+      return;
+    }
+    
+    final totalOriginalWeight = _calculateTotalWeight(scan);
+    List<FoodItem> updatedFoodItems = [];
+    
+    if (totalOriginalWeight > 0) {
+      updatedFoodItems = scan.foodItems.map((item) {
+        final proportion = item.weight / totalOriginalWeight;
+        final newWeight = weight! * proportion;
+        return FoodItem(
+          itemName: item.itemName,
+          weight: newWeight,
+          remainingWeight: item.remainingWeight,
+        );
+      }).toList();
+    } else {
+      updatedFoodItems = scan.foodItems;
+    }
+    
+    final updatedScan = scan.copyWith(
+      foodItems: updatedFoodItems,
+    );
+    
+    await _updateFoodScan(updatedScan);
+    
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 }

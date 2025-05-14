@@ -130,7 +130,7 @@ class FoodComparisonResultWidget extends StatelessWidget {
                         child: const Row(
                           children: [
                             Text('1 ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Icon(Icons.colorize, size: 16),
+                            Icon(Icons.edit, size: 16),
                           ],
                         ),
                       ),
