@@ -1,75 +1,72 @@
 # FoodWise
 
-Aplikasi berbasis Flutter untuk membantu pengguna memantau, mengurangi, dan mengelola sampah makanan (food waste). FoodWise menggunakan Firebase untuk penyimpanan data dan Google Gemini AI untuk mendeteksi makanan.
+A Flutter-based application to help users monitor, reduce, and manage food waste. FoodWise uses Firebase for data storage and Google Gemini AI for food detection.
 
-## Fitur Utama
+## Main Features
 
-- **Pemindaian Makanan**: Scan makanan menggunakan kamera dan AI Google Gemini
-- **Riwayat Pemindaian**: Melihat dan mengelola riwayat makanan yang dipindai
-- **Kalender**: Melihat aktivitas food waste berdasarkan tanggal
-- **Edukasi**: Materi edukasi tentang pengelolaan sampah makanan
-- **Gamifikasi**: Leaderboard dan quest untuk memotivasi pengguna
+- **Food Scanning**: Scan food using camera and Google Gemini AI
+- **Scan History**: View and manage history of scanned food
+- **Calendar**: View food waste activities by date
+- **Education**: Educational materials about food waste management
+- **Gamification**: Leaderboard and quests to motivate users
 
-## Teknologi yang Digunakan
+## Technologies Used
 
-- **Flutter**: Framework untuk pengembangan UI
-- **Firebase**: Autentikasi, Firestore, Storage
-- **Provider**: State management
-- **Google Gemini API**: AI untuk pemindaian dan analisis makanan
-- **FlChart**: Visualisasi data food waste
-- **Table Calendar**: Integrasi kalender
+- **Flutter**: Framework for UI development
+- **Firebase**: Authentication, Firestore, Storage
+- **Google Gemini API**: AI for food scanning and analysis
 
-## Prasyarat
+## Prerequisites
 
-- Flutter SDK (versi 3.0.0 atau lebih baru)
-- Akun Firebase
-- Akun Google Gemini API
+- Flutter SDK (version 3.0.0 or newer)
+- Firebase Account
+- Google Gemini API Account
 
-## Instalasi
+## Installation
 
-1. Clone repository ini
+1. Clone this repository
 ```bash
-git clone https://github.com/shluf/foodwise
-cd foodwise
+git clone https://github.com/shluf/FoodWise
+cd FoodWise
 ```
 
-2. Instal dependensi
+2. Install dependencies
 ```bash
 flutter pub get
 ```
 
-3. Konfigurasi Firebase dan Gemini API
+3. Configure Firebase and Gemini API
 
-   - Buat proyek di Firebase Console
-   - Tambahkan aplikasi Android dan iOS ke proyek Firebase Anda
-   - Unduh file konfigurasi:
-     - `google-services.json` (Android) - letakkan di `/android/app/`
-     - `GoogleService-Info.plist` (iOS) - letakkan di `/ios/Runner/`
+   - Create a project in Firebase Console
+   - Add Android and iOS apps to your Firebase project
+   - Download configuration files:
+     - `google-services.json` (Android) - place in `/android/app/`
+     - `GoogleService-Info.plist` (iOS) - place in `/ios/Runner/`
 
-   - Dapatkan API key dari Google AI Studio
-   - Salin `env.example` dan ubah namanya menjadi `.env` 
-   - Ganti dengan API key Anda
+   - Get API key from Google AI Studio
+   - Copy `env.example` and rename it to `.env` 
+   - Replace with your API key
 
-4. Jalankan aplikasi
+4. Run the application
 ```bash
 flutter run
 ```
 
-## Struktur Project
+## Project Structure
 
 ```
 lib/
-  - main.dart               # Entry point aplikasi
-  - config/                 # Konfigurasi
-    - firebase_options.dart # Opsi Firebase
-  - models/                 # Model data
+  - main.dart               # Application entry point
+  - config/                 # Configuration
+    - firebase_options.dart # Firebase options
+  - models/                 # Data models
     - user_model.dart
     - food_scan_model.dart
     - quest_model.dart
-  - services/               # Layanan 
-    - auth_service.dart     # Autentikasi
+  - services/               # Services 
+    - auth_service.dart     # Authentication
     - firestore_service.dart # Database
-    - ai_service.dart       # Integrasi AI
+    - ai_service.dart       # AI integration
   - providers/              # State management
     - auth_provider.dart
     - food_scan_provider.dart
@@ -77,17 +74,19 @@ lib/
   - screens/                # UI screens
     - auth/
     - home/
+    - layout/
+    - onboarding/
     - scan/
     - history/
-    - educational/
     - calendar/
     - progress/
     - settings/
     - gamification/
   - widgets/                # UI Components
+  - utils/                  # Utility functions
 ```
 
-## Lisensi
+## License
 
 [MIT License](LICENSE)
 

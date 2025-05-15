@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
 import '../../widgets/camera_overlay_widget.dart';
-import '../../widgets/food_comparison_result_widget.dart';
+import '../../widgets/food_comparison_result.dart';
 
 class FoodWasteScanScreen extends StatefulWidget {
   final String foodScanId;

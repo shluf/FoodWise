@@ -9,7 +9,7 @@ import '../calendar/calendar_screen.dart';
 import '../scan/scan_screen.dart';
 import '../scan/food_waste_scan_screen.dart';
 import '../../services/firestore_service.dart';
-import '../../widgets/food_comparison_result_widget.dart';
+import '../../widgets/food_comparison_result.dart';
 import '../../widgets/scan/result_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;

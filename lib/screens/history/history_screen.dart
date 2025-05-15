@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_scan_provider.dart';
 import '../../models/food_scan_model.dart';
-import '../../widgets/food_comparison_result_widget.dart';
+import '../../widgets/food_comparison_result.dart';
 // Import DummyDataGenerator
 import '../scan/food_waste_scan_screen.dart';
 
